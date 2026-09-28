@@ -1,19 +1,13 @@
 <!DOCTYPE html>
-<html lang="bn" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>TaskPay BD - Official Telegram Mini App</title>
-  <meta name="description" content="TaskPay BD with Firebase Realtime Database, AdsGram integration, bKash & Nagad cashouts, and Super Admin panel." />
-  <meta name="theme-color" content="#09090b" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>TaskPay BD - Earn Money Online</title>
 
-  <!-- Telegram WebApp SDK -->
+  <!-- Telegram Web App SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- AdsGram SDK -->
-  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
-  <!-- Firebase App & Realtime Database SDK (v10 Compat) -->
-  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -23,705 +17,545 @@
         extend: {
           colors: {
             brand: {
-              50: '#ecfdf5',
-              400: '#34d399',
-              500: '#10b981',
-              600: '#059669',
-              700: '#047857'
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d'
+            },
+            dark: {
+              bg: '#0b1329',
+              card: '#151f38',
+              surface: '#1c294a',
+              border: '#263761'
             }
           }
         }
       }
     }
   </script>
-  <!-- Canvas Confetti -->
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Adsgram SDK -->
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+  <!-- Firebase App & Realtime Database SDKs (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <style>
+    /* Prevent text selection and rubber-banding */
     body {
-      font-family: 'Plus Jakarta Sans', 'Hind Siliguri', -apple-system, BlinkMacSystemFont, sans-serif;
       -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
     }
-    .custom-scrollbar::-webkit-scrollbar {
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
       width: 4px;
     }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: #09090b;
+    ::-webkit-scrollbar-thumb {
+      background: #263761;
+      border-radius: 9999px;
     }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #27272a;
-      border-radius: 4px;
+    .active-nav {
+      color: #22c55e;
+      position: relative;
     }
-    .safe-bottom {
-      padding-bottom: env(safe-area-inset-bottom, 16px);
+    .active-nav::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 5px;
+      height: 5px;
+      background: #22c55e;
+      border-radius: 50%;
     }
   </style>
 </head>
-<body class="bg-[#09090b] text-slate-100 min-h-screen antialiased select-none flex flex-col items-center">
+<body class="bg-dark-bg text-slate-100 font-sans min-h-screen pb-24 overflow-x-hidden antialiased">
 
-  <!-- Mobile App Container -->
-  <div class="w-full max-w-md min-h-screen bg-[#09090b] flex flex-col relative pb-24 shadow-2xl border-x border-zinc-800/60">
-
-    <!-- Top Sticky Header -->
-    <header class="sticky top-0 z-40 bg-[#09090b]/90 backdrop-blur-md border-b border-zinc-800/80 px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-2.5">
-        <div class="relative cursor-pointer" onclick="openModal('switchIdModal')" title="টেলিগ্রাম আইডি পরিবর্তন করুন">
-          <div id="userAvatar" class="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 p-[2px] shadow-sm">
-            <div class="w-full h-full bg-zinc-900 rounded-full flex items-center justify-center font-bold text-emerald-400 text-sm overflow-hidden">
-              <span id="userAvatarInitial">U</span>
-            </div>
-          </div>
-          <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#09090b] rounded-full"></span>
-        </div>
-        <div>
-          <div class="flex items-center gap-1.5">
-            <span id="headerUserName" class="text-sm font-bold text-white tracking-wide truncate max-w-[120px]">User</span>
-            <button onclick="openModal('levelModal')" id="headerLevelPill" class="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-0.5 hover:bg-amber-500/30 transition-all">
-              <span>🥉 Lvl 1</span>
-            </button>
-          </div>
-          <p id="telegramHandleText" class="text-[11px] text-zinc-400 font-mono">ID: 8422485324</p>
-        </div>
-      </div>
-
-      <!-- Action Badges (Admin / Trophy / Sound / Balance) -->
-      <div class="flex items-center gap-2">
-        <!-- Persistent Super Admin Badge (Exclusively for ID 8422485324) -->
-        <button id="adminHeaderBadge" onclick="openAdminPanel()" class="hidden px-2.5 py-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-zinc-950 font-black text-xs flex items-center gap-1 shadow-lg shadow-amber-500/30 animate-pulse active:scale-95 transition-all">
-          <span>🛡️</span>
-          <span>ADMIN</span>
-        </button>
-        <button onclick="openModal('leaderboardModal')" title="Leaderboard" class="w-8 h-8 rounded-full bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-700 flex items-center justify-center text-amber-400 active:scale-95 transition-all shadow-sm">
-          🏆
-        </button>
-        <button onclick="toggleSound()" id="soundToggleBtn" title="Toggle Sound" class="w-8 h-8 rounded-full bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-700 flex items-center justify-center text-zinc-300 active:scale-95 transition-all text-xs">
-          🔊
-        </button>
-        <div class="bg-gradient-to-r from-emerald-500/15 to-teal-500/15 border border-emerald-500/30 rounded-xl px-2.5 py-1 flex items-center gap-1.5 shadow-sm">
-          <span class="text-emerald-400 font-bold text-xs">৳</span>
-          <span id="headerBalance" class="font-extrabold text-sm text-emerald-400">0.00</span>
-        </div>
-      </div>
-    </header>
-
-    <!-- Realtime Connection Status Banner -->
-    <div id="connectionBanner" class="bg-emerald-950/80 border-b border-emerald-800/50 px-4 py-1 text-[11px] text-emerald-300 flex items-center justify-between">
-      <span class="flex items-center gap-1.5">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-        <span>Firebase Realtime Database Connected</span>
-      </span>
-      <button onclick="openModal('switchIdModal')" class="text-[10px] text-amber-300 underline font-mono hover:text-white">আইডি পরিবর্তন / Admin</button>
+  <!-- ================= NOTIFICATION TOAST ================= -->
+  <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 transform -translate-y-20 opacity-0 transition-all duration-300 pointer-events-none w-11/12 max-w-sm">
+    <div id="toast-body" class="flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl bg-dark-card border border-dark-border text-sm font-medium">
+      <i id="toast-icon" class="fa-solid fa-circle-check text-brand-500 text-lg"></i>
+      <span id="toast-msg" class="flex-1">Notification message</span>
     </div>
+  </div>
 
-    <!-- TAB 1: HOME TAB -->
-    <main id="tab-home" class="tab-content flex-1 p-4 space-y-4">
+  <!-- ================= TOP HEADER BAR ================= -->
+  <header class="sticky top-0 z-40 bg-dark-bg/80 backdrop-blur-md border-b border-dark-border/60 px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-brand-500/20">
+        <i class="fa-solid fa-bolt text-white text-base"></i>
+      </div>
+      <div>
+        <h1 class="text-base font-bold leading-tight flex items-center gap-1.5">
+          TaskPay <span class="text-xs bg-brand-500/20 text-brand-500 border border-brand-500/30 px-1.5 py-0.2 rounded font-semibold">BD</span>
+        </h1>
+        <p id="user-display-name" class="text-xs text-slate-400 font-medium">Connecting...</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1.5 bg-dark-card border border-dark-border px-3 py-1.5 rounded-full text-xs font-semibold text-emerald-400">
+        <span>৳</span>
+        <span id="top-bar-balance">0.00</span>
+      </div>
+      <button id="admin-badge-btn" onclick="openAdminModal()" class="hidden bg-amber-500/20 border border-amber-500/40 text-amber-400 p-2 rounded-xl text-xs hover:bg-amber-500/30 transition">
+        <i class="fa-solid fa-shield-halved"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTENT VIEWS ================= -->
+  <main class="max-w-md mx-auto px-4 pt-4">
+
+    <!-- 1. HOME TAB -->
+    <section id="tab-home" class="space-y-4">
       <!-- Balance Card -->
-      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-emerald-950/40 border border-emerald-500/20 p-5 shadow-lg">
-        <div class="flex justify-between items-start">
-          <div>
-            <p class="text-xs uppercase tracking-wider text-zinc-400 font-semibold">Firebase মোট ব্যালেন্স / Total Balance</p>
-            <div class="flex items-baseline gap-1 mt-1">
-              <span class="text-3xl font-black text-white">৳</span>
-              <span id="homeMainBalance" class="text-4xl font-extrabold text-white tracking-tight">0.00</span>
-            </div>
-          </div>
-          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> রিয়েল-টাইম
-          </span>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-zinc-800/80">
-          <div class="bg-zinc-800/40 rounded-xl p-2.5">
-            <p class="text-[11px] text-zinc-400">টাস্ক ও এড ইনকাম</p>
-            <p id="homeTaskEarnings" class="text-sm font-bold text-white mt-0.5">৳0.00</p>
-          </div>
-          <div class="bg-zinc-800/40 rounded-xl p-2.5">
-            <p class="text-[11px] text-zinc-400">রেফারেল বোনাস</p>
-            <p id="homeReferralEarnings" class="text-sm font-bold text-white mt-0.5">৳0.00</p>
-          </div>
-        </div>
-
-        <div class="flex gap-2 mt-4">
-          <button onclick="switchTab('earn')" class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-98 transition-all">
-            ⚡ কাজ শুরু করুন
-          </button>
-          <button onclick="switchTab('withdraw')" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-zinc-700 active:scale-98 transition-all">
-            💳 টাকা তুলুন
-          </button>
-        </div>
-      </div>
-
-      <!-- User Level Card -->
-      <div onclick="openModal('levelModal')" class="cursor-pointer rounded-2xl bg-zinc-900/90 border border-amber-500/30 p-4 hover:border-amber-500/60 transition-all shadow-md relative overflow-hidden group">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div id="homeLevelBadgeIcon" class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-xl shadow-inner">
-              🥉
-            </div>
-            <div>
-              <div class="flex items-center gap-1.5">
-                <h4 id="homeLevelTierName" class="font-bold text-sm text-white">ব্রোঞ্জ স্টার্টার (Level 1)</h4>
-                <span id="homeLevelMultiplierBadge" class="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">1.0x Boost</span>
-              </div>
-              <p class="text-[11px] text-zinc-400 mt-0.5">পরবর্তী টায়ারে উন্নীত হয়ে আয় বাড়ান</p>
-            </div>
-          </div>
-          <span class="text-zinc-400 text-xs group-hover:translate-x-0.5 transition-transform">➔</span>
-        </div>
-
-        <div class="mt-3">
-          <div class="flex justify-between text-[11px] text-zinc-400 mb-1">
-            <span>লেভেল অগ্রগতি</span>
-            <span id="homeLevelPercentText">0%</span>
-          </div>
-          <div class="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
-            <div id="homeLevelProgressBar" class="h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full transition-all duration-500" style="width: 10%"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Leaderboard Shortcut Card -->
-      <div onclick="openModal('leaderboardModal')" class="cursor-pointer rounded-2xl bg-gradient-to-r from-indigo-950/60 to-purple-950/60 border border-indigo-500/30 p-3.5 hover:border-indigo-400 transition-all flex items-center justify-between shadow-md">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-lg">
-            🏆
-          </div>
-          <div>
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs font-bold text-white">টপ ১০ রেফারেল লিডারবোর্ড</span>
-              <span id="homeRankPill" class="text-[10px] bg-indigo-500/30 text-indigo-300 border border-indigo-400/30 px-1.5 py-0.2 rounded font-bold">র‍্যাংক #1</span>
-            </div>
-            <p class="text-[11px] text-indigo-200/70">রেফার করে সেরা ১০-এ স্থান পান এবং বোনাস জিতুন</p>
-          </div>
-        </div>
-        <span class="text-indigo-400 text-xs">দেখুন ➔</span>
-      </div>
-
-      <!-- Daily Streak Bonus -->
-      <div class="rounded-2xl bg-zinc-900/90 border border-zinc-800 p-4">
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center gap-2">
-            <span class="text-amber-400 text-base">🔥</span>
-            <h4 class="text-xs font-bold text-white uppercase tracking-wider">দৈনিক চেক-ইন বোনাস / Daily Streak</h4>
-          </div>
-          <span class="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">উপলব্ধ</span>
-        </div>
-        <div class="flex items-center justify-between gap-1.5">
-          <div class="flex-1 bg-zinc-800/60 border border-zinc-700/60 rounded-xl p-2 text-center">
-            <span class="text-[10px] text-zinc-400 block">দিন ১</span>
-            <span class="text-xs font-extrabold text-amber-400 block">৳১০</span>
-          </div>
-          <div class="flex-1 bg-zinc-800/60 border border-zinc-700/60 rounded-xl p-2 text-center">
-            <span class="text-[10px] text-zinc-400 block">দিন ২</span>
-            <span class="text-xs font-extrabold text-amber-400 block">৳১৫</span>
-          </div>
-          <div class="flex-1 bg-zinc-800/60 border border-zinc-700/60 rounded-xl p-2 text-center">
-            <span class="text-[10px] text-zinc-400 block">দিন ৩</span>
-            <span class="text-xs font-extrabold text-amber-400 block">৳২৫</span>
-          </div>
-          <div class="flex-1 bg-gradient-to-b from-amber-500/20 to-zinc-800/80 border border-amber-500/40 rounded-xl p-2 text-center">
-            <span class="text-[10px] text-amber-300 block font-bold">দিন ৭</span>
-            <span class="text-xs font-black text-amber-300 block">৳৫০</span>
-          </div>
-        </div>
-        <button id="claimDailyBtn" onclick="claimDailyReward()" class="w-full mt-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-black py-2.5 rounded-xl text-xs shadow-md transition-all active:scale-98">
-          🎁 দৈনিক বোনাস সংগ্রহ করুন (+৳১০.০০)
-        </button>
-      </div>
-    </main>
-
-    <!-- TAB 2: EARN TAB -->
-    <main id="tab-earn" class="tab-content hidden flex-1 p-4 space-y-4">
-      <!-- Rewarded Ad Card -->
-      <div class="rounded-2xl bg-gradient-to-br from-indigo-950/70 via-zinc-900 to-zinc-900 border border-indigo-500/30 p-5 shadow-lg relative overflow-hidden">
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-dark-card via-dark-surface to-dark-card border border-dark-border p-5 shadow-xl">
+        <div class="absolute -right-6 -bottom-6 w-28 h-28 bg-brand-500/10 rounded-full blur-2xl pointer-events-none"></div>
         <div class="flex justify-between items-start mb-2">
+          <span class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Available Balance</span>
+          <span class="text-[11px] bg-slate-800 text-slate-300 border border-slate-700 px-2 py-0.5 rounded-md font-mono" id="user-level-badge">Lvl 1 Bronze</span>
+        </div>
+        <div class="flex items-baseline gap-2 mb-4">
+          <span class="text-3xl font-extrabold text-white tracking-tight">৳ <span id="home-balance">0.00</span></span>
+          <span class="text-xs text-emerald-400 font-medium flex items-center gap-0.5"><i class="fa-solid fa-arrow-trend-up"></i> Active</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 pt-3 border-t border-dark-border/80">
+          <div class="bg-dark-bg/60 p-2.5 rounded-xl border border-dark-border/40">
+            <span class="text-[11px] text-slate-400 block mb-0.5">Task Earnings</span>
+            <span class="text-sm font-bold text-slate-200">৳ <span id="home-task-earnings">0.00</span></span>
+          </div>
+          <div class="bg-dark-bg/60 p-2.5 rounded-xl border border-dark-border/40">
+            <span class="text-[11px] text-slate-400 block mb-0.5">Referral Income</span>
+            <span class="text-sm font-bold text-slate-200">৳ <span id="home-refer-earnings">0.00</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily Streak Card -->
+      <div class="bg-dark-card border border-dark-border rounded-2xl p-4 flex items-center justify-between gap-3 shadow-md">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center text-xl">
+            <i class="fa-solid fa-fire-flame-curved"></i>
+          </div>
           <div>
-            <span class="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">AdsGram ভিডিও স্পনসর</span>
-            <h3 class="text-base font-extrabold text-white mt-1">ভিডিও দেখুন এবং আয় করুন</h3>
-            <p class="text-xs text-zinc-400 mt-0.5">বিজ্ঞাপন দেখা শেষ হলে স্বয়ংক্রিয়ভাবে ব্যালেন্স যোগ হবে</p>
-          </div>
-          <div class="text-right">
-            <span id="earnAdRewardAmountText" class="text-lg font-black text-emerald-400 block">+৳১০.০০</span>
-            <span id="earnAdMultiplierTag" class="text-[9px] text-amber-300 bg-amber-500/20 px-1 rounded font-bold">1.0x Boosted</span>
+            <h3 class="text-sm font-bold text-slate-100">Daily Bonus</h3>
+            <p class="text-xs text-slate-400">Streak: <span id="streak-counter" class="text-amber-400 font-semibold">0</span> Days (+1.00 BDT)</p>
           </div>
         </div>
-
-        <div class="flex items-center justify-between text-xs text-zinc-400 my-3 bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800">
-          <span>আজকের বাকি বিজ্ঞাপন:</span>
-          <span id="dailyAdCounterText" class="font-bold text-white">১০ / ১০</span>
-        </div>
-
-        <button onclick="watchRewardedAd()" id="watchAdBtn" class="w-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 active:scale-98 transition-all">
-          <span>▶️</span> বিজ্ঞাপন দেখুন (Watch Video Ad)
+        <button id="claim-streak-btn" onclick="claimDailyStreak()" class="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition">
+          Claim
         </button>
       </div>
 
-      <!-- Task Center Header -->
-      <div class="flex items-center justify-between pt-2">
-        <h3 class="text-sm font-extrabold text-white flex items-center gap-1.5">
-          <span>📋</span> মাইক্রো টাস্ক লিস্ট / Available Tasks
-        </h3>
-        <span id="tasksRemainingBadge" class="text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full font-bold">৪টি কাজ বাকি</span>
+      <!-- Quick Action Buttons -->
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="switchTab('earn')" class="bg-dark-card hover:bg-dark-surface border border-dark-border p-3.5 rounded-2xl flex items-center gap-3 text-left transition active:scale-98">
+          <div class="w-10 h-10 rounded-xl bg-brand-500/15 text-brand-500 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-list-check"></i>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-slate-200">Earn Tasks</h4>
+            <span class="text-[11px] text-slate-400">Watch & Micro Tasks</span>
+          </div>
+        </button>
+        <button onclick="switchTab('withdraw')" class="bg-dark-card hover:bg-dark-surface border border-dark-border p-3.5 rounded-2xl flex items-center gap-3 text-left transition active:scale-98">
+          <div class="w-10 h-10 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-money-bill-transfer"></i>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-slate-200">Cash Out</h4>
+            <span class="text-[11px] text-slate-400">bKash / Nagad / Rocket</span>
+          </div>
+        </button>
       </div>
 
-      <div id="tasksContainer" class="space-y-3">
-        <!-- Tasks populated directly from code & synced with Firebase completed IDs -->
-      </div>
-    </main>
-
-    <!-- TAB 3: REFER TAB -->
-    <main id="tab-refer" class="tab-content hidden flex-1 p-4 space-y-4">
-      <div class="rounded-2xl bg-gradient-to-br from-purple-950/60 via-zinc-900 to-zinc-900 border border-purple-500/30 p-5 shadow-lg text-center relative">
-        <div class="w-14 h-14 rounded-2xl bg-purple-500/20 border border-purple-500/40 mx-auto flex items-center justify-center text-2xl shadow-inner mb-3">
-          👥
+      <!-- Recent Transactions / Logs -->
+      <div class="bg-dark-card border border-dark-border rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Recent Activity</h3>
+          <span class="text-[11px] text-brand-500 cursor-pointer" onclick="switchTab('withdraw')">View All</span>
         </div>
-        <h3 class="text-lg font-black text-white">বন্ধুদের আমন্ত্রণ জানান</h3>
-        <p class="text-xs text-zinc-300 mt-1 max-w-xs mx-auto">
-          প্রতিটি নতুন রেফারে সরাসরি পাবেন <strong class="text-emerald-400 font-extrabold" id="referRewardBannerText">৳৫০.০০</strong> Firebase ইনস্ট্যান্ট বোনাস!
+        <div id="home-recent-activity" class="space-y-2 text-xs">
+          <div class="text-center text-slate-500 py-3">No activity recorded yet</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. EARN TAB -->
+    <section id="tab-earn" class="hidden space-y-4">
+      <!-- Video Ad Reward Section -->
+      <div class="bg-gradient-to-r from-emerald-950/40 via-dark-card to-dark-card border border-brand-500/30 rounded-2xl p-4 shadow-lg">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-brand-500 bg-brand-500/10 px-2 py-0.5 rounded-md">Instant Reward</span>
+            <h3 class="text-base font-bold text-white mt-1">Watch Video Advertisement</h3>
+            <p class="text-xs text-slate-400">Watch 15-30s ad to instantly earn balance.</p>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-brand-500/20 text-brand-400 flex items-center justify-center text-2xl">
+            <i class="fa-solid fa-play"></i>
+          </div>
+        </div>
+        <div class="flex items-center justify-between pt-2 border-t border-dark-border/60">
+          <div class="text-xs text-slate-300 font-semibold">
+            Reward: <span class="text-brand-400">৳ <span id="ad-reward-display">0.50</span></span>
+          </div>
+          <button id="watch-ad-btn" onclick="handleWatchAd()" class="bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl shadow-md shadow-brand-500/20 active:scale-95 transition flex items-center gap-2">
+            <i class="fa-solid fa-video"></i> Watch Ad
+          </button>
+        </div>
+      </div>
+
+      <!-- Micro Tasks Header -->
+      <div class="flex items-center justify-between pt-2">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Available Micro Tasks</h3>
+        <span class="text-xs text-slate-500 font-medium" id="tasks-count-badge">0 Tasks</span>
+      </div>
+
+      <!-- Micro Tasks List Container -->
+      <div id="tasks-list" class="space-y-3">
+        <div class="text-center py-8 text-slate-500 text-xs">
+          <i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
+          <p>Loading available tasks...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. REFER TAB -->
+    <section id="tab-refer" class="hidden space-y-4">
+      <!-- Refer Banner -->
+      <div class="bg-gradient-to-br from-indigo-950/40 via-dark-card to-dark-card border border-indigo-500/30 rounded-2xl p-5 shadow-lg text-center">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-2xl mb-3">
+          <i class="fa-solid fa-user-plus"></i>
+        </div>
+        <h2 class="text-lg font-bold text-white mb-1">Invite Friends & Earn</h2>
+        <p class="text-xs text-slate-300 max-w-xs mx-auto mb-4">
+          Earn <span class="text-brand-400 font-bold">৳ 2.00 BDT</span> directly when your referred friend joins and starts earning!
         </p>
 
-        <!-- Referral Code Box -->
-        <div class="mt-4 bg-zinc-950 border border-zinc-800 rounded-xl p-3 flex items-center justify-between">
-          <div class="text-left">
-            <span class="text-[10px] text-zinc-400 block uppercase font-bold">আপনার রেফারেল আইডি</span>
-            <span id="myReferralCode" class="text-base font-black text-emerald-400 tracking-wider">8422485324</span>
-          </div>
-          <button onclick="copyReferralCode()" class="bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-zinc-700 active:scale-95 transition-all">
-            📋 কোড কপি
+        <!-- Referral Link Box -->
+        <div class="bg-dark-bg border border-dark-border rounded-xl p-2 flex items-center justify-between gap-2 text-xs">
+          <span id="refer-link-input" class="text-slate-400 truncate font-mono text-[11px] select-all px-2">Generating link...</span>
+          <button onclick="copyReferralLink()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-3 py-1.5 rounded-lg active:scale-95 transition flex items-center gap-1.5 shrink-0">
+            <i class="fa-solid fa-copy"></i> Copy
           </button>
-        </div>
-
-        <!-- Copy My Invite Link Button -->
-        <button id="copyMyInviteLinkBtn" onclick="copyMyInviteLink()" class="w-full mt-3 py-3.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 hover:brightness-110 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-indigo-950/50 active:scale-98 transition-all">
-          <span>🔗</span> <span id="copyMyInviteLinkBtnText">Copy My Invite Link (লিংক কপি করুন)</span>
-        </button>
-
-        <div class="flex gap-2 mt-2">
-          <button onclick="shareOnTelegram()" class="flex-1 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-extrabold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-98 transition-all">
-            ✈️ টেলিগ্রামে শেয়ার করুন
-          </button>
-        </div>
-
-        <!-- Dynamic Unique Link Pill -->
-        <div onclick="copyMyInviteLink()" class="mt-2.5 p-2.5 bg-black/40 hover:bg-black/60 rounded-xl border border-white/5 text-[10px] text-indigo-300 font-mono flex items-center justify-between cursor-pointer transition-colors group">
-          <span id="myReferralUrlText" class="truncate select-all">https://t.me/taskpaybd2bot?start=8422485324</span>
-          <span class="text-[9px] text-zinc-400 bg-white/10 px-2 py-0.5 rounded font-sans group-hover:text-white shrink-0">Copy</span>
         </div>
       </div>
 
-      <!-- Referral Stats Cards -->
+      <!-- Refer Stats -->
       <div class="grid grid-cols-2 gap-3">
-        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center">
-          <span class="text-xs text-zinc-400 block font-semibold">Firebase রেফারেল সংখ্যা</span>
-          <span id="referTotalCount" class="text-2xl font-black text-white mt-1 block">০</span>
+        <div class="bg-dark-card border border-dark-border p-3.5 rounded-2xl">
+          <span class="text-xs text-slate-400 block mb-1">Total Invited</span>
+          <span class="text-xl font-extrabold text-white" id="refer-total-count">0</span>
+          <span class="text-[11px] text-slate-500 block mt-0.5">Friends</span>
         </div>
-        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center">
-          <span class="text-xs text-zinc-400 block font-semibold">মোট রেফার আয়</span>
-          <span id="referTotalIncome" class="text-2xl font-black text-emerald-400 mt-1 block">৳০.০০</span>
-        </div>
-      </div>
-
-      <!-- Joined Friends List from Firebase -->
-      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
-        <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3">আমন্ত্রিত বন্ধুরা / Joined Friends (Firebase)</h4>
-        <div id="referredFriendsList" class="space-y-2 text-xs max-h-60 overflow-y-auto custom-scrollbar">
-          <p class="text-zinc-500 text-center py-2">এখনো কোনো বন্ধু যোগ দেয়নি</p>
+        <div class="bg-dark-card border border-dark-border p-3.5 rounded-2xl">
+          <span class="text-xs text-slate-400 block mb-1">Referral Income</span>
+          <span class="text-xl font-extrabold text-indigo-400">৳ <span id="refer-total-income">0.00</span></span>
+          <span class="text-[11px] text-slate-500 block mt-0.5">BDT Lifetime</span>
         </div>
       </div>
-    </main>
 
-    <!-- TAB 4: WITHDRAW TAB -->
-    <main id="tab-withdraw" class="tab-content hidden flex-1 p-4 space-y-4">
-      <div class="rounded-2xl bg-gradient-to-br from-emerald-950/50 via-zinc-900 to-zinc-900 border border-emerald-500/30 p-5 shadow-lg">
-        <h3 class="text-base font-extrabold text-white">উত্তোলন অনুরোধ / Cashout Request</h3>
-        <p class="text-xs text-zinc-400 mt-0.5">বিকাশ ও নগদে সরাসরি টাকা তুলুন (মিনিমাম <span id="minWithdrawSpan" class="text-emerald-400 font-bold">৳১০২০</span>)</p>
+      <!-- Invited Friends List -->
+      <div class="bg-dark-card border border-dark-border rounded-2xl p-4">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Invited Friends</h3>
+        <div id="referrals-list" class="space-y-2 text-xs">
+          <div class="text-center text-slate-500 py-4">No friends invited yet. Share your referral link above!</div>
+        </div>
+      </div>
+    </section>
 
-        <!-- Referral Condition -->
-        <div class="mt-3 p-2.5 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-between text-xs">
-          <span class="text-zinc-400">উত্তোলনের জন্য রেফারেল শর্ত:</span>
-          <span id="withdrawReferralCondition" class="font-bold text-amber-400">০ / ১০ রেফারেল</span>
+    <!-- 4. WITHDRAW TAB -->
+    <section id="tab-withdraw" class="hidden space-y-4">
+      <!-- Withdraw Form Card -->
+      <div class="bg-dark-card border border-dark-border rounded-2xl p-5 shadow-lg">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-bold text-white">Cashout Balance</h2>
+          <span class="text-xs bg-emerald-500/10 text-brand-400 border border-brand-500/30 px-2 py-0.5 rounded-md font-semibold">Min: 50 BDT</span>
         </div>
 
-        <form id="withdrawForm" onsubmit="handleWithdrawSubmit(event)" class="mt-4 space-y-3.5">
+        <form id="withdraw-form" onsubmit="handleWithdrawSubmit(event)" class="space-y-4 text-xs">
+          <!-- Payment Method Selection -->
           <div>
-            <label class="block text-xs font-bold text-zinc-300 mb-1.5">পেমেন্ট মেথড</label>
-            <div class="grid grid-cols-2 gap-2">
-              <label class="cursor-pointer border border-zinc-700 has-[:checked]:border-pink-500 has-[:checked]:bg-pink-950/40 rounded-xl p-2.5 text-center flex flex-col items-center gap-1 transition-all">
-                <input type="radio" name="withdrawMethod" value="bKash" checked class="hidden" />
-                <span class="text-sm font-black text-pink-400">bKash</span>
-                <span class="text-[10px] text-zinc-400">বিকাশ পার্সোনাল</span>
+            <label class="block text-slate-400 font-medium mb-1.5">Select Payment Method</label>
+            <div class="grid grid-cols-3 gap-2">
+              <label class="relative flex items-center justify-center p-3 rounded-xl border border-dark-border bg-dark-surface cursor-pointer has-[:checked]:border-brand-500 has-[:checked]:bg-brand-500/10 transition">
+                <input type="radio" name="withdraw-method" value="bKash" class="sr-only" checked />
+                <span class="font-bold text-slate-200">bKash</span>
               </label>
-              <label class="cursor-pointer border border-zinc-700 has-[:checked]:border-orange-500 has-[:checked]:bg-orange-950/40 rounded-xl p-2.5 text-center flex flex-col items-center gap-1 transition-all">
-                <input type="radio" name="withdrawMethod" value="Nagad" class="hidden" />
-                <span class="text-sm font-black text-orange-400">Nagad</span>
-                <span class="text-[10px] text-zinc-400">নগদ পার্সোনাল</span>
+              <label class="relative flex items-center justify-center p-3 rounded-xl border border-dark-border bg-dark-surface cursor-pointer has-[:checked]:border-brand-500 has-[:checked]:bg-brand-500/10 transition">
+                <input type="radio" name="withdraw-method" value="Nagad" class="sr-only" />
+                <span class="font-bold text-slate-200">Nagad</span>
+              </label>
+              <label class="relative flex items-center justify-center p-3 rounded-xl border border-dark-border bg-dark-surface cursor-pointer has-[:checked]:border-brand-500 has-[:checked]:bg-brand-500/10 transition">
+                <input type="radio" name="withdraw-method" value="Rocket" class="sr-only" />
+                <span class="font-bold text-slate-200">Rocket</span>
               </label>
             </div>
           </div>
 
+          <!-- Account Number -->
           <div>
-            <label class="block text-xs font-bold text-zinc-300 mb-1">অ্যাকাউন্ট নাম্বার (১১ ডিজিট)</label>
-            <input type="tel" id="withdrawAccount" required placeholder="017xxxxxxxx" maxlength="11" class="w-full bg-zinc-950 border border-zinc-700 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors" />
+            <label class="block text-slate-400 font-medium mb-1">Account Number (Personal)</label>
+            <input type="number" id="withdraw-account" placeholder="01XXXXXXXXX" required class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 text-sm font-mono" />
           </div>
 
+          <!-- Amount -->
           <div>
-            <div class="flex justify-between text-xs mb-1">
-              <label class="font-bold text-zinc-300">উত্তোলনের পরিমাণ (৳)</label>
-              <span class="text-zinc-400">ব্যালেন্স: <strong id="withdrawAvailBalanceText" class="text-emerald-400">৳0.00</strong></span>
+            <label class="block text-slate-400 font-medium mb-1">Amount (BDT)</label>
+            <div class="relative">
+              <input type="number" id="withdraw-amount" min="50" step="1" placeholder="50" required class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 text-sm font-semibold pl-8" />
+              <span class="absolute left-3 top-2.5 text-slate-400 font-semibold">৳</span>
             </div>
-            <input type="number" id="withdrawAmount" required min="1020" step="1" placeholder="সর্বনিম্ন ৳১০২০" class="w-full bg-zinc-950 border border-zinc-700 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors" />
+            <p class="text-[11px] text-slate-500 mt-1">Available: ৳ <span id="withdraw-avail-bal">0.00</span></p>
           </div>
 
-          <button type="submit" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold py-3 rounded-xl text-sm shadow-md active:scale-98 transition-all">
-            উত্তোলন কনফার্ম করুন (Submit to Firebase)
+          <!-- Submit Button -->
+          <button type="submit" id="withdraw-submit-btn" class="w-full bg-gradient-to-r from-brand-600 to-emerald-500 hover:from-brand-500 hover:to-emerald-400 text-slate-950 font-bold py-3 rounded-xl text-sm shadow-lg shadow-brand-500/20 active:scale-98 transition">
+            Request Cashout
           </button>
         </form>
       </div>
 
-      <!-- Withdrawal History -->
-      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
-        <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3">আমার উইথড্রয়াল হিস্টোরি (Firebase)</h4>
-        <div id="withdrawHistoryList" class="space-y-2 text-xs max-h-60 overflow-y-auto custom-scrollbar">
-          <p class="text-zinc-500 text-center py-2">কোনো উত্তোলনের রেকর্ড নেই</p>
+      <!-- Cashout History -->
+      <div class="bg-dark-card border border-dark-border rounded-2xl p-4">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Withdrawal History</h3>
+        <div id="withdrawals-history-list" class="space-y-2 text-xs">
+          <div class="text-center text-slate-500 py-4">No cashout requests yet.</div>
         </div>
       </div>
-    </main>
+    </section>
 
-    <!-- TAB 5: PROFILE TAB -->
-    <main id="tab-profile" class="tab-content hidden flex-1 p-4 space-y-4">
-      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-center relative">
-        <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 p-1 mx-auto shadow-md">
-          <div class="w-full h-full bg-zinc-950 rounded-full flex items-center justify-center font-black text-emerald-400 text-xl">
-            <span id="profileAvatarInitial">U</span>
+    <!-- 5. PROFILE TAB -->
+    <section id="tab-profile" class="hidden space-y-4">
+      <!-- Profile Card -->
+      <div class="bg-dark-card border border-dark-border rounded-2xl p-5 text-center relative overflow-hidden">
+        <div class="w-16 h-16 mx-auto rounded-full bg-gradient-to-tr from-brand-500 to-cyan-500 p-0.5 mb-3">
+          <div class="w-full h-full rounded-full bg-dark-card flex items-center justify-center text-2xl font-bold text-white" id="profile-avatar">
+            U
           </div>
         </div>
-        <h3 id="profileFullName" class="font-extrabold text-base text-white mt-2">User Profile</h3>
-        <p id="profileTelegramId" class="text-xs text-zinc-400 font-mono">ID: 8422485324</p>
+        <h2 class="text-base font-bold text-white" id="profile-name">Telegram User</h2>
+        <p class="text-xs text-slate-400 font-mono" id="profile-username">@username</p>
+        <div class="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-dark-surface border border-dark-border rounded-full text-[11px] text-emerald-400">
+          <i class="fa-solid fa-shield-cat"></i> ID: <span id="profile-tgid">00000000</span>
+        </div>
+      </div>
 
-        <div class="flex items-center justify-center gap-2 mt-3">
-          <button onclick="openModal('levelModal')" id="profileTierBadge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
-            <span>🥉 Level 1 (1.0x)</span>
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="bg-dark-card border border-dark-border p-3 rounded-xl">
+          <span class="text-[11px] text-slate-400 block mb-0.5">Tasks Done</span>
+          <span class="text-sm font-bold text-slate-200" id="profile-completed-count">0</span>
+        </div>
+        <div class="bg-dark-card border border-dark-border p-3 rounded-xl">
+          <span class="text-[11px] text-slate-400 block mb-0.5">Streak</span>
+          <span class="text-sm font-bold text-amber-400" id="profile-streak-count">0 Days</span>
+        </div>
+        <div class="bg-dark-card border border-dark-border p-3 rounded-xl">
+          <span class="text-[11px] text-slate-400 block mb-0.5">Referrals</span>
+          <span class="text-sm font-bold text-indigo-400" id="profile-refer-count">0</span>
+        </div>
+      </div>
+
+      <!-- Super Admin Panel Launch Button (Shown only for Admin) -->
+      <div id="admin-launch-container" class="hidden">
+        <div class="bg-gradient-to-r from-amber-500/10 via-amber-500/20 to-amber-500/10 border border-amber-500/40 rounded-2xl p-4 text-center">
+          <div class="flex items-center justify-center gap-2 text-amber-400 font-bold text-sm mb-1">
+            <i class="fa-solid fa-crown"></i> Super Admin Privileges
+          </div>
+          <p class="text-xs text-slate-300 mb-3">Access full TaskPay BD administration dashboard, task editor & cashouts.</p>
+          <button onclick="openAdminModal()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs active:scale-98 transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-sliders"></i> Open Super Admin Dashboard
           </button>
-          <button onclick="openModal('leaderboardModal')" id="profileRankBadge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-1">
-            <span>🏆 Rank #1</span>
+        </div>
+      </div>
+
+      <!-- App Info & Support Links -->
+      <div class="bg-dark-card border border-dark-border rounded-2xl divide-y divide-dark-border/60 text-xs">
+        <a href="https://t.me" target="_blank" class="p-3.5 flex items-center justify-between text-slate-300 hover:text-white transition">
+          <div class="flex items-center gap-3">
+            <i class="fa-brands fa-telegram text-sky-400 text-base"></i>
+            <span>Official Community Channel</span>
+          </div>
+          <i class="fa-solid fa-angle-right text-slate-500"></i>
+        </a>
+        <a href="https://t.me" target="_blank" class="p-3.5 flex items-center justify-between text-slate-300 hover:text-white transition">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-headset text-brand-400 text-base"></i>
+            <span>24/7 Customer Support</span>
+          </div>
+          <i class="fa-solid fa-angle-right text-slate-500"></i>
+        </a>
+        <div class="p-3.5 flex items-center justify-between text-slate-400">
+          <span>App Version</span>
+          <span class="font-mono text-[11px] text-slate-500">v2.4.0 (Enterprise)</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= BOTTOM NAVIGATION DOCK ================= -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-dark-card/95 backdrop-blur-lg border-t border-dark-border px-3 py-2">
+    <div class="max-w-md mx-auto flex items-center justify-around">
+      <button onclick="switchTab('home')" id="nav-btn-home" class="flex flex-col items-center gap-1 text-slate-400 text-[10px] font-semibold active-nav py-1 px-3 transition">
+        <i class="fa-solid fa-house text-lg"></i>
+        <span>Home</span>
+      </button>
+
+      <button onclick="switchTab('earn')" id="nav-btn-earn" class="flex flex-col items-center gap-1 text-slate-400 text-[10px] font-semibold py-1 px-3 transition">
+        <i class="fa-solid fa-hand-holding-dollar text-lg"></i>
+        <span>Earn</span>
+      </button>
+
+      <button onclick="switchTab('refer')" id="nav-btn-refer" class="flex flex-col items-center gap-1 text-slate-400 text-[10px] font-semibold py-1 px-3 transition">
+        <i class="fa-solid fa-users text-lg"></i>
+        <span>Refer</span>
+      </button>
+
+      <button onclick="switchTab('withdraw')" id="nav-btn-withdraw" class="flex flex-col items-center gap-1 text-slate-400 text-[10px] font-semibold py-1 px-3 transition">
+        <i class="fa-solid fa-wallet text-lg"></i>
+        <span>Cashout</span>
+      </button>
+
+      <button onclick="switchTab('profile')" id="nav-btn-profile" class="flex flex-col items-center gap-1 text-slate-400 text-[10px] font-semibold py-1 px-3 transition">
+        <i class="fa-solid fa-user-astronaut text-lg"></i>
+        <span>Profile</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ================= SUPER ADMIN MODAL ================= -->
+  <div id="admin-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden overflow-y-auto">
+    <div class="min-h-screen px-3 py-6 max-w-lg mx-auto flex flex-col justify-center">
+      <div class="bg-dark-card border border-amber-500/40 rounded-3xl shadow-2xl p-5 space-y-5">
+        
+        <!-- Modal Top Bar -->
+        <div class="flex items-center justify-between border-b border-dark-border pb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+              <i class="fa-solid fa-crown text-sm"></i>
+            </div>
+            <div>
+              <h2 class="text-sm font-bold text-white">Super Admin Control</h2>
+              <p class="text-[11px] text-amber-400 font-mono">TG ID: 8422485324</p>
+            </div>
+          </div>
+          <button onclick="closeAdminModal()" class="w-8 h-8 rounded-lg bg-dark-surface hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark text-base"></i>
           </button>
         </div>
-      </div>
 
-      <div class="grid grid-cols-3 gap-2">
-        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
-          <span class="text-[10px] text-zinc-400 block font-semibold">টাস্ক সম্পন্ন</span>
-          <span id="profileCompletedTasksCount" class="text-base font-bold text-white mt-0.5 block">0</span>
-        </div>
-        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
-          <span class="text-[10px] text-zinc-400 block font-semibold">বিজ্ঞাপন দেখা</span>
-          <span id="profileTotalAdsWatched" class="text-base font-bold text-white mt-0.5 block">0</span>
-        </div>
-        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
-          <span class="text-[10px] text-zinc-400 block font-semibold">মোট রেফারেল</span>
-          <span id="profileTotalRefs" class="text-base font-bold text-emerald-400 mt-0.5 block">0</span>
-        </div>
-      </div>
-
-      <!-- Profile Options -->
-      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden divide-y divide-zinc-800/80 text-xs font-semibold">
-        <!-- Persistent Super Admin link in Profile (Highlighted if ID == 8422485324) -->
-        <button id="adminProfileRow" onclick="openAdminPanel()" class="w-full px-4 py-3 text-left text-amber-300 hover:bg-zinc-800 flex items-center justify-between">
-          <span class="flex items-center gap-2"><span>🛡️</span> সুপার অ্যাডমিন প্যানেল (Super Admin)</span>
-          <span class="text-zinc-500">➔</span>
-        </button>
-        <button onclick="openModal('switchIdModal')" class="w-full px-4 py-3 text-left text-cyan-300 hover:bg-zinc-800 flex items-center justify-between">
-          <span class="flex items-center gap-2"><span>🔄</span> টেলিগ্রাম আইডি পরিবর্তন / Admin Login</span>
-          <span class="text-zinc-500">➔</span>
-        </button>
-        <button onclick="openModal('levelModal')" class="w-full px-4 py-3 text-left text-zinc-200 hover:bg-zinc-800 flex items-center justify-between">
-          <span class="flex items-center gap-2"><span>⭐</span> লেভেল এবং রিওয়ার্ড বুস্টার</span>
-          <span class="text-zinc-500">➔</span>
-        </button>
-        <button onclick="openModal('leaderboardModal')" class="w-full px-4 py-3 text-left text-zinc-200 hover:bg-zinc-800 flex items-center justify-between">
-          <span class="flex items-center gap-2"><span>🏆</span> টপ ১০ লিডারবোর্ড</span>
-          <span class="text-zinc-500">➔</span>
-        </button>
-      </div>
-
-      <div class="text-center text-[11px] text-zinc-500 pt-2 space-y-0.5">
-        <p>TaskPay BD v3.2.0 • Firebase Realtime DB Connected</p>
-        <p>Official Telegram Mini App • AdsGram Certified</p>
-      </div>
-    </main>
-
-    <!-- BOTTOM NAVIGATION BAR -->
-    <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40 bg-[#09090b]/95 backdrop-blur-lg border-t border-zinc-800 px-2 py-2 flex items-center justify-around safe-bottom">
-      <button onclick="switchTab('home')" id="nav-btn-home" class="nav-button flex flex-col items-center gap-1 text-emerald-400 font-bold transition-colors py-1 px-3">
-        <span class="text-lg">🏠</span>
-        <span class="text-[10px]">হোম</span>
-      </button>
-      <button onclick="switchTab('earn')" id="nav-btn-earn" class="nav-button flex flex-col items-center gap-1 text-zinc-400 font-medium transition-colors py-1 px-3">
-        <span class="text-lg">⚡</span>
-        <span class="text-[10px]">টাস্ক</span>
-      </button>
-      <button onclick="switchTab('refer')" id="nav-btn-refer" class="nav-button flex flex-col items-center gap-1 text-zinc-400 font-medium transition-colors py-1 px-3">
-        <span class="text-lg">👥</span>
-        <span class="text-[10px]">রেফার</span>
-      </button>
-      <button onclick="switchTab('withdraw')" id="nav-btn-withdraw" class="nav-button flex flex-col items-center gap-1 text-zinc-400 font-medium transition-colors py-1 px-3">
-        <span class="text-lg">💳</span>
-        <span class="text-[10px]">উত্তোলন</span>
-      </button>
-      <button onclick="switchTab('profile')" id="nav-btn-profile" class="nav-button flex flex-col items-center gap-1 text-zinc-400 font-medium transition-colors py-1 px-3">
-        <span class="text-lg">👤</span>
-        <span class="text-[10px]">প্রোফাইল</span>
-      </button>
-    </nav>
-  </div>
-
-  <!-- ==================== MODALS ==================== -->
-
-  <!-- 1. SWITCH ID / ADMIN LOGIN MODAL -->
-  <div id="switchIdModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-    <div class="w-full max-w-sm bg-zinc-950 border border-zinc-800 rounded-3xl p-5 shadow-2xl flex flex-col relative">
-      <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
-        <h3 class="font-extrabold text-sm text-white">টেলিগ্রাম আইডি নির্বাচন</h3>
-        <button onclick="closeModal('switchIdModal')" class="w-8 h-8 rounded-full bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center">✕</button>
-      </div>
-
-      <div class="py-3 space-y-3 text-xs">
-        <p class="text-zinc-400">
-          টেলিগ্রামের বাইরে ব্রাউজারে ডেমো বা টেস্ট চালানোর সময় আপনার কাঙ্ক্ষিত আইডি লিখুন। সুপার অ্যাডমিন প্যানেল সক্রিয় করতে <strong class="text-amber-400 font-mono">8422485324</strong> লিখুন:
-        </p>
-
-        <div>
-          <label class="block text-zinc-300 font-bold mb-1">Telegram User ID:</label>
-          <input type="text" id="manualUserIdInput" placeholder="8422485324" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-white font-mono text-sm focus:border-emerald-500 focus:outline-none" />
+        <!-- 1. Real-time Metrics -->
+        <div class="grid grid-cols-3 gap-2">
+          <div class="bg-dark-bg p-3 rounded-xl border border-dark-border text-center">
+            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Total Users</span>
+            <span id="admin-metric-users" class="text-base font-extrabold text-white">0</span>
+          </div>
+          <div class="bg-dark-bg p-3 rounded-xl border border-dark-border text-center">
+            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Pending Payouts</span>
+            <span id="admin-metric-pending" class="text-base font-extrabold text-amber-400">0</span>
+          </div>
+          <div class="bg-dark-bg p-3 rounded-xl border border-dark-border text-center">
+            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Total Tasks</span>
+            <span id="admin-metric-tasks" class="text-base font-extrabold text-brand-400">0</span>
+          </div>
         </div>
 
-        <button onclick="applyManualUserId('8422485324')" class="w-full bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-bold py-2 rounded-xl text-xs transition-colors">
-          ⚡ ওনার আইডি (8422485324) হিসেবে সেট করুন
-        </button>
-      </div>
+        <!-- 2. Ad Settings Section -->
+        <div class="bg-dark-bg/80 border border-dark-border p-4 rounded-2xl space-y-3">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+            <i class="fa-solid fa-rectangle-ad text-indigo-400"></i> Ad Engine Switcher
+          </h3>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-dark-border bg-dark-card cursor-pointer has-[:checked]:border-indigo-500">
+              <input type="radio" name="admin-ad-network" value="adsgram" id="ad-net-adsgram" checked />
+              <span class="font-semibold text-slate-200">Adsgram</span>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-dark-border bg-dark-card cursor-pointer has-[:checked]:border-indigo-500">
+              <input type="radio" name="admin-ad-network" value="adsterra" id="ad-net-adsterra" />
+              <span class="font-semibold text-slate-200">Adsterra Link</span>
+            </label>
+          </div>
 
-      <div class="flex gap-2 mt-2">
-        <button onclick="applyManualUserId()" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black py-2.5 rounded-xl text-xs transition-colors">
-          সেভ করুন
-        </button>
-        <button onclick="closeModal('switchIdModal')" class="flex-1 bg-zinc-800 text-zinc-300 font-bold py-2.5 rounded-xl text-xs transition-colors">
-          বাতিল
-        </button>
+          <div class="space-y-2 text-xs">
+            <div>
+              <label class="block text-slate-400 mb-1">Adsgram Block ID</label>
+              <input type="text" id="admin-adsgram-id" placeholder="e.g. 5432" class="w-full bg-dark-card border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-indigo-500" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Adsterra Direct / Smartlink URL</label>
+              <input type="url" id="admin-adsterra-url" placeholder="https://example.com/direct-link" class="w-full bg-dark-card border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-indigo-500" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Reward Per Ad (BDT)</label>
+              <input type="number" id="admin-ad-reward" step="0.05" min="0.1" placeholder="0.50" class="w-full bg-dark-card border border-dark-border rounded-xl px-3 py-2 text-white font-semibold text-xs focus:outline-none focus:border-indigo-500" />
+            </div>
+          </div>
+          <button onclick="saveAdSettings()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-xl text-xs active:scale-98 transition">
+            Save Ad Configurations
+          </button>
+        </div>
+
+        <!-- 3. Dynamic Task Manager -->
+        <div class="bg-dark-bg/80 border border-dark-border p-4 rounded-2xl space-y-3">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+            <i class="fa-solid fa-plus-circle text-brand-400"></i> Add New Task
+          </h3>
+          <form id="admin-task-form" onsubmit="handleAdminAddTask(event)" class="space-y-2 text-xs">
+            <div>
+              <label class="block text-slate-400 mb-1">Task Title</label>
+              <input type="text" id="admin-task-title" placeholder="e.g. Join Official Telegram Channel" required class="w-full bg-dark-card border border-dark-border rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-brand-500" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Target Action URL</label>
+              <input type="url" id="admin-task-url" placeholder="https://t.me/yourchannel or YouTube" required class="w-full bg-dark-card border border-dark-border rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-brand-500" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Reward Amount (BDT)</label>
+              <input type="number" id="admin-task-reward" step="0.25" min="0.25" placeholder="1.50" required class="w-full bg-dark-card border border-dark-border rounded-xl px-3 py-2 text-white font-semibold text-xs focus:outline-none focus:border-brand-500" />
+            </div>
+            <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold py-2 rounded-xl text-xs active:scale-98 transition">
+              Create & Publish Task
+            </button>
+          </form>
+
+          <!-- Current Tasks List -->
+          <div class="pt-3 border-t border-dark-border/60">
+            <h4 class="text-[11px] font-bold uppercase text-slate-400 mb-2">Live Tasks in Database</h4>
+            <div id="admin-tasks-list" class="space-y-2 max-h-40 overflow-y-auto pr-1 text-xs">
+              <div class="text-slate-500 text-center py-2">No live tasks.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Cashout Requests Manager -->
+        <div class="bg-dark-bg/80 border border-dark-border p-4 rounded-2xl space-y-3">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+            <i class="fa-solid fa-clock-rotate-left text-amber-400"></i> Cashout Approvals
+          </h3>
+          <div id="admin-withdrawals-list" class="space-y-2.5 max-h-56 overflow-y-auto pr-1 text-xs">
+            <div class="text-slate-500 text-center py-3">No pending withdrawals.</div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 
-  <!-- 2. SUPER ADMIN PANEL MODAL (Strictly for ID: 8422485324) -->
-  <div id="adminModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
-    <div class="w-full max-w-sm max-h-[92vh] bg-zinc-950 border border-amber-500/50 rounded-3xl p-5 shadow-2xl flex flex-col relative overflow-hidden">
-      <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
-        <div class="flex items-center gap-2">
-          <span class="text-xl">🛡️</span>
-          <div>
-            <h3 class="font-black text-sm text-amber-400">সুপার অ্যাডমিন ড্যাশবোর্ড</h3>
-            <p class="text-[10px] text-zinc-400 font-mono">Telegram ID: 8422485324 Authorized</p>
-          </div>
-        </div>
-        <button onclick="closeModal('adminModal')" class="w-8 h-8 rounded-full bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center">✕</button>
-      </div>
-
-      <div class="overflow-y-auto custom-scrollbar flex-1 py-3 space-y-4 text-xs">
-        <!-- Firebase Settings Config -->
-        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5 space-y-2.5">
-          <h4 class="font-bold text-white uppercase tracking-wider text-[11px]">Firebase রিয়েল-টাইম সিস্টেম কনফিগ</h4>
-          <div class="flex items-center justify-between">
-            <span class="text-zinc-300">বিজ্ঞাপনের মোড:</span>
-            <select id="adminAdMode" onchange="saveAdminSettingsToFirebase()" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-white text-xs">
-              <option value="adsgram">লাইভ AdsGram SDK</option>
-              <option value="simulated">সিমুলেটেড / ডেমো প্লেয়ার</option>
-            </select>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-zinc-300">AdsGram Block ID:</span>
-            <input type="text" id="adminAdsgramBlockId" onchange="saveAdminSettingsToFirebase()" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-white text-right w-28 text-xs font-mono" />
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-zinc-300">প্রতি এড রিওয়ার্ড (৳):</span>
-            <input type="number" id="adminAdReward" step="1" onchange="saveAdminSettingsToFirebase()" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-white text-right w-20 text-xs" />
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-zinc-300">প্রতি রেফারেল বোনাস (৳):</span>
-            <input type="number" id="adminReferReward" step="5" onchange="saveAdminSettingsToFirebase()" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-white text-right w-20 text-xs" />
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-zinc-300">দৈনিক এড লিমিট (বার):</span>
-            <input type="number" id="adminDailyAdLimit" onchange="saveAdminSettingsToFirebase()" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-white text-right w-20 text-xs" />
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-zinc-300">সর্বনিম্ন উইথড্রয়াল (৳):</span>
-            <input type="number" id="adminMinWithdraw" onchange="saveAdminSettingsToFirebase()" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-white text-right w-20 text-xs" />
-          </div>
-        </div>
-
-        <!-- Pending Withdrawals Review (Firebase Realtime) -->
-        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5 space-y-2.5">
-          <div class="flex items-center justify-between">
-            <h4 class="font-bold text-white uppercase tracking-wider text-[11px]">পেন্ডিং উইথড্র রিকোয়েস্ট (Firebase)</h4>
-            <span id="adminPendingCountBadge" class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-bold">0 Pending</span>
-          </div>
-          <div id="adminPendingWithdrawList" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
-            <p class="text-zinc-500 text-center py-1">কোনো পেন্ডিং উইথড্র রিকোয়েস্ট নেই</p>
-          </div>
-        </div>
-
-        <!-- Test Admin Actions -->
-        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5 space-y-2">
-          <h4 class="font-bold text-white uppercase tracking-wider text-[11px]">ব্যালেন্স নিয়ন্ত্রণ</h4>
-          <div class="flex gap-2">
-            <button onclick="adminAdjustUserBalance(50)" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-emerald-400 font-bold py-2 rounded-xl border border-zinc-700">+৳৫০ ব্যালেন্স</button>
-            <button onclick="adminAdjustUserBalance(500)" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-emerald-400 font-bold py-2 rounded-xl border border-zinc-700">+৳৫০০ ব্যালেন্স</button>
-          </div>
-        </div>
-      </div>
-
-      <button onclick="closeModal('adminModal')" class="w-full mt-2 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black py-2.5 rounded-xl text-xs transition-colors">
-        সেটিংস সেভ ও বন্ধ করুন
-      </button>
-    </div>
-  </div>
-
-  <!-- 3. VIDEO AD SIMULATION / PLAYER MODAL -->
-  <div id="adModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
-    <div class="w-full max-w-sm bg-zinc-950 border border-zinc-800 rounded-3xl p-5 shadow-2xl flex flex-col items-center text-center relative">
-      <div class="w-full flex items-center justify-between text-xs text-zinc-400 pb-3 border-b border-zinc-800">
-        <span class="flex items-center gap-1 text-amber-400 font-bold">
-          <span>📢</span> AdsGram স্পনসরড ভিডিও
-        </span>
-        <span id="adCountdownBadge" class="bg-zinc-800 px-2.5 py-0.5 rounded-full font-mono font-bold text-white">15s</span>
-      </div>
-
-      <div class="w-full aspect-video bg-gradient-to-tr from-zinc-900 via-indigo-950/60 to-zinc-900 rounded-2xl border border-zinc-800 my-4 flex flex-col items-center justify-center p-4 relative overflow-hidden">
-        <div class="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-xl animate-pulse">
-          ▶️
-        </div>
-        <p class="text-xs font-bold text-white mt-2">AdsGram Premium Sponsor</p>
-        <p class="text-[11px] text-zinc-400">ভিডিওটি শেষ পর্যন্ত দেখুন</p>
-        <div class="absolute bottom-0 left-0 right-0 h-1 bg-zinc-800">
-          <div id="adVideoProgressBar" class="h-full bg-emerald-400 w-0 transition-all duration-1000 linear"></div>
-        </div>
-      </div>
-
-      <p class="text-xs text-zinc-400 mb-4">
-        পুরো বিজ্ঞাপনটি দেখুন। শেষ হলে <strong class="text-emerald-400" id="adModalRewardText">+৳১০.০০</strong> রিয়েল-টাইম ব্যালেন্সে যুক্ত হবে!
-      </p>
-
-      <button id="adCloseBtn" disabled onclick="closeAdModal(true)" class="w-full bg-zinc-800 text-zinc-500 font-bold py-2.5 rounded-xl text-xs transition-all cursor-not-allowed">
-        বিজ্ঞাপন সমাপ্তির জন্য অপেক্ষা করুন... (15)
-      </button>
-    </div>
-  </div>
-
-  <!-- 4. USER LEVEL & MULTIPLIER ROADMAP MODAL -->
-  <div id="levelModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-    <div class="w-full max-w-sm max-h-[88vh] bg-zinc-950 border border-zinc-800 rounded-3xl p-5 shadow-2xl flex flex-col relative overflow-hidden">
-      <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
-        <div class="flex items-center gap-2">
-          <span class="text-xl">⭐</span>
-          <div>
-            <h3 class="font-extrabold text-sm text-white">লেভেল এবং রিওয়ার্ড বুস্টার</h3>
-            <p class="text-[11px] text-zinc-400">প্রতিটি লেভেলে আয়ের মাল্টিপ্লায়ার বৃদ্ধি পায়</p>
-          </div>
-        </div>
-        <button onclick="closeModal('levelModal')" class="w-8 h-8 rounded-full bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center">✕</button>
-      </div>
-
-      <div class="overflow-y-auto custom-scrollbar flex-1 py-3 space-y-3 text-xs">
-        <div class="p-3 rounded-2xl bg-zinc-900 border border-zinc-700/80">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-amber-300">🥉 Lvl 1: ব্রোঞ্জ স্টার্টার</span>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-bold">1.0x Boost</span>
-          </div>
-          <p class="text-[11px] text-zinc-400 mt-1">শুরু থেকেই সক্রিয়। সাধারণ রেটে আয়।</p>
-        </div>
-        <div class="p-3 rounded-2xl bg-zinc-900 border border-zinc-700/80">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-slate-200">🥈 Lvl 2: সিলভার আর্নার</span>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 font-bold border border-slate-600">1.15x Boost</span>
-          </div>
-          <p class="text-[11px] text-zinc-400 mt-1">শর্ত: ২টি টাস্ক এবং ২টি রেফারেল সম্পন্ন করুন।</p>
-        </div>
-        <div class="p-3 rounded-2xl bg-zinc-900 border border-amber-500/30">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-amber-400">🥇 Lvl 3: গোল্ড মাস্টার</span>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">1.30x Boost</span>
-          </div>
-          <p class="text-[11px] text-zinc-400 mt-1">শর্ত: ৪টি টাস্ক এবং ৫টি রেফারেল সম্পন্ন করুন।</p>
-        </div>
-        <div class="p-3 rounded-2xl bg-zinc-900 border border-cyan-500/30">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-cyan-400">💎 Lvl 4: প্লাটিনাম ভিআইপি</span>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30">1.60x Boost</span>
-          </div>
-          <p class="text-[11px] text-zinc-400 mt-1">শর্ত: ৫টি টাস্ক এবং ১০টি রেফারেল সম্পন্ন করুন।</p>
-        </div>
-        <div class="p-3 rounded-2xl bg-gradient-to-r from-purple-950/40 to-zinc-900 border border-purple-500/40">
-          <div class="flex items-center justify-between">
-            <span class="font-black text-purple-300">👑 Lvl 5: ডায়মন্ড লিজেন্ড</span>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/30 text-purple-200 font-extrabold border border-purple-400/50">2.00x Boost</span>
-          </div>
-          <p class="text-[11px] text-zinc-400 mt-1">শর্ত: ৬টি টাস্ক এবং ১৫টি রেফারেল। সমস্ত কাজের দ্বিগুণ রিওয়ার্ড!</p>
-        </div>
-      </div>
-
-      <button onclick="closeModal('levelModal')" class="w-full mt-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-2.5 rounded-xl text-xs transition-colors">
-        বন্ধ করুন
-      </button>
-    </div>
-  </div>
-
-  <!-- 5. TOP 10 REFERRALS LEADERBOARD MODAL -->
-  <div id="leaderboardModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-    <div class="w-full max-w-sm max-h-[90vh] bg-zinc-950 border border-zinc-800 rounded-3xl p-5 shadow-2xl flex flex-col relative overflow-hidden">
-      <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
-        <div class="flex items-center gap-2">
-          <span class="text-xl">🏆</span>
-          <div>
-            <h3 class="font-black text-sm text-white">টপ ১০ রেফারেল লিডারবোর্ড</h3>
-            <p class="text-[11px] text-zinc-400">Firebase থেকে রিয়েল-টাইম তথ্য</p>
-          </div>
-        </div>
-        <button onclick="closeModal('leaderboardModal')" class="w-8 h-8 rounded-full bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center">✕</button>
-      </div>
-
-      <div id="podiumContainer" class="grid grid-cols-3 gap-2 pt-3 pb-2 text-center items-end"></div>
-
-      <div id="leaderboardList" class="overflow-y-auto custom-scrollbar flex-1 py-2 space-y-1.5 text-xs">
-        <p class="text-zinc-500 text-center py-4">তথ্য লোড হচ্ছে...</p>
-      </div>
-
-      <div id="leaderboardUserStanding" class="mt-2 p-3 rounded-2xl bg-zinc-900 border border-indigo-500/30 flex items-center justify-between text-xs">
-        <div>
-          <span class="text-[10px] text-zinc-400 block">আপনার অবস্থান</span>
-          <p class="font-extrabold text-white" id="leaderboardMyRankText">র‍্যাংক #1 • 0 রেফারেল</p>
-        </div>
-        <button onclick="closeModal('leaderboardModal'); switchTab('refer')" class="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black px-3 py-1.5 rounded-xl text-xs active:scale-95 transition-all">
-          রেফার করুন ➔
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- TOAST NOTIFICATION -->
-  <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-zinc-900/95 border border-emerald-500/50 text-white text-xs font-bold px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 transform -translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
-    <span id="toastIcon">✅</span>
-    <span id="toastMessage">অ্যাকশন সফল হয়েছে!</span>
-  </div>
-
-  <!-- ==================== FIREBASE & JAVASCRIPT ==================== -->
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
   <script>
-    /* -------------------------------------------------------------
-       1. FIREBASE CONFIGURATION & INITIALIZATION
-    ------------------------------------------------------------- */
+    // 1. FIREBASE INITIALIZATION
     const firebaseConfig = {
       apiKey: "AIzaSyAJ-3AUIlZLiwRO0ha6TpWQeAdNyDTjs1A",
       authDomain: "taskpay-bd-26841.firebaseapp.com",
@@ -738,905 +572,829 @@
     }
     const db = firebase.database();
 
-    // SUPER ADMIN TELEGRAM ID
-    const SUPER_ADMIN_ID = "8422485324";
-
-    // Global in-memory user state
-    let currentUser = {
-      id: "8422485324", // Default to owner ID
-      name: "Owner / User",
-      username: "taskpay_owner",
-      avatarInitial: "O",
-      balance: 0.00,
-      taskEarnings: 0.00,
-      referralEarnings: 0.00,
-      totalAdsWatched: 0,
-      dailyAdsWatchedToday: 0,
-      lastAdDate: "",
-      lastDailyClaimDate: "",
-      completedTasks: [],
-      referrals: {},
-      soundEnabled: true
-    };
-
+    // 2. CONSTANTS & APPLICATION STATE
+    const ADMIN_TELEGRAM_ID = "8422485324";
+    let currentUser = null;
+    let userRecord = null;
     let appSettings = {
-      adMode: "adsgram",
-      adBlockId: "int-7557",
-      adReward: 10.00,
-      referReward: 50.00,
-      dailyAdLimit: 10,
-      minWithdraw: 1020.00,
-      minReferralsForWithdraw: 10,
-      botUsername: "taskpaybd2bot"
+      network: "adsgram",
+      adsgramBlockId: "int-7689",
+      adsterraUrl: "https://www.google.com",
+      rewardPerAd: 0.50
     };
+    let allTasks = {};
+    let adsgramAdController = null;
 
-    const allTasks = [
-      { id: "t1", title: "অফিসিয়াল টেলিগ্রাম চ্যানেলে জয়েন করুন", baseReward: 25.00, icon: "✈️", link: "https://t.me/taskpaybd2bot" },
-      { id: "t2", title: "ইউটিউব চ্যানেল সাবস্ক্রাইব করুন", baseReward: 20.00, icon: "▶️", link: "https://youtube.com" },
-      { id: "t3", title: "ফেসবুক পেজে লাইক ও ফলো দিন", baseReward: 15.00, icon: "👍", link: "https://facebook.com" },
-      { id: "t4", title: "TrustPilot এ ৫ স্টার রেটিং দিন", baseReward: 40.00, icon: "⭐", link: "https://trustpilot.com" }
-    ];
+    // 3. TELEGRAM MINI APP INITIALIZATION
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      try {
+        tg.headerColor = '#0b1329';
+        tg.backgroundColor = '#0b1329';
+      } catch (e) {}
+    }
 
-    let userWithdrawals = [];
-    let allWithdrawalsAdmin = [];
-    let leaderboardCache = [];
-
-    const LEVEL_TIERS = [
-      { level: 1, name: 'ব্রোঞ্জ স্টার্টার (Bronze)', icon: '🥉', multiplier: 1.0, tasksReq: 0, refsReq: 0 },
-      { level: 2, name: 'সিলভার আর্নার (Silver)', icon: '🥈', multiplier: 1.15, tasksReq: 2, refsReq: 2 },
-      { level: 3, name: 'গোল্ড মাস্টার (Gold)', icon: '🥇', multiplier: 1.30, tasksReq: 4, refsReq: 5 },
-      { level: 4, name: 'প্লাটিনাম ভিআইপি (Platinum)', icon: '💎', multiplier: 1.60, tasksReq: 5, refsReq: 10 },
-      { level: 5, name: 'ডায়মন্ড লিজেন্ড (Diamond)', icon: '👑', multiplier: 2.00, tasksReq: 6, refsReq: 15 }
-    ];
-
-    /* -------------------------------------------------------------
-       2. AUTHENTICATION & SUPER ADMIN VERIFICATION
-    ------------------------------------------------------------- */
-    function initTelegramAndAuth() {
-      const tg = window.Telegram?.WebApp;
-      if (tg) {
-        tg.ready();
-        tg.expand();
-      }
-
+    // Resolve Current Telegram User or provide Fallback for Desktop/Browser testing
+    function initUserContext() {
       let tgUser = tg?.initDataUnsafe?.user;
-      let startParam = tg?.initDataUnsafe?.start_param;
-
-      if (!startParam) {
+      
+      if (!tgUser || !tgUser.id) {
+        // Fallback for regular browser testing: check URL or fallback to Admin for testing
         const urlParams = new URLSearchParams(window.location.search);
-        startParam = urlParams.get('start');
+        const testId = urlParams.get('test_id') || ADMIN_TELEGRAM_ID;
+        tgUser = {
+          id: testId,
+          first_name: "Admin Tester",
+          username: "admintester"
+        };
       }
 
-      // Check if user saved a custom ID in this browser session
-      const savedManualId = sessionStorage.getItem('taskpay_active_id');
+      currentUser = {
+        id: String(tgUser.id),
+        first_name: tgUser.first_name || "User",
+        username: tgUser.username || "user_" + String(tgUser.id).slice(-4)
+      };
 
-      if (tgUser && tgUser.id) {
-        currentUser.id = String(tgUser.id);
-        currentUser.name = (tgUser.first_name || 'User') + (tgUser.last_name ? ' ' + tgUser.last_name : '');
-        currentUser.username = tgUser.username || `user_${currentUser.id}`;
-        currentUser.avatarInitial = (tgUser.first_name || 'U').charAt(0).toUpperCase();
-      } else if (savedManualId) {
-        currentUser.id = savedManualId;
-        currentUser.name = (savedManualId === SUPER_ADMIN_ID) ? 'TaskPay Owner (Admin)' : `User ${savedManualId}`;
-        currentUser.username = (savedManualId === SUPER_ADMIN_ID) ? 'taskpay_owner' : `user_${savedManualId}`;
-        currentUser.avatarInitial = (savedManualId === SUPER_ADMIN_ID) ? 'A' : 'U';
-      } else {
-        // Fallback default: set to owner ID 8422485324 so Admin is always available by default
-        currentUser.id = SUPER_ADMIN_ID;
-        currentUser.name = 'TaskPay Owner (Admin)';
-        currentUser.username = 'taskpay_owner';
-        currentUser.avatarInitial = 'A';
+      // Header and Profile UI Updates
+      document.getElementById('user-display-name').textContent = currentUser.first_name;
+      document.getElementById('profile-name').textContent = currentUser.first_name;
+      document.getElementById('profile-username').textContent = '@' + currentUser.username;
+      document.getElementById('profile-tgid').textContent = currentUser.id;
+      document.getElementById('profile-avatar').textContent = (currentUser.first_name[0] || 'U').toUpperCase();
+
+      // Check if Admin
+      if (currentUser.id === ADMIN_TELEGRAM_ID) {
+        document.getElementById('admin-badge-btn').classList.remove('hidden');
+        document.getElementById('admin-launch-container').classList.remove('hidden');
       }
 
-      document.getElementById('manualUserIdInput').value = currentUser.id;
-      checkAdminStatus();
-      syncFirebaseForUser(startParam);
-    }
-
-    function checkAdminStatus() {
-      const isSuperAdmin = (String(currentUser.id) === SUPER_ADMIN_ID);
-      const adminHeaderBadge = document.getElementById('adminHeaderBadge');
-      const adminProfileRow = document.getElementById('adminProfileRow');
-
-      if (isSuperAdmin) {
-        if (adminHeaderBadge) adminHeaderBadge.classList.remove('hidden');
-        if (adminProfileRow) adminProfileRow.classList.remove('hidden');
-      } else {
-        if (adminHeaderBadge) adminHeaderBadge.classList.add('hidden');
-        if (adminProfileRow) adminProfileRow.classList.add('hidden');
-      }
-    }
-
-    function applyManualUserId(presetId) {
-      const val = presetId || document.getElementById('manualUserIdInput').value.trim();
-      if (!val || !/^\d+$/.test(val)) {
-        showToast('সঠিক নিউমেরিক টেলিগ্রাম আইডি লিখুন!', '⚠️');
-        return;
-      }
-
-      sessionStorage.setItem('taskpay_active_id', val);
-      currentUser.id = val;
-      if (val === SUPER_ADMIN_ID) {
-        currentUser.name = 'TaskPay Owner (Admin)';
-        currentUser.username = 'taskpay_owner';
-        currentUser.avatarInitial = 'A';
-      } else {
-        currentUser.name = `User ${val}`;
-        currentUser.username = `user_${val}`;
-        currentUser.avatarInitial = 'U';
-      }
-
-      closeModal('switchIdModal');
-      checkAdminStatus();
-      syncFirebaseForUser(null);
-      showToast(`আইডি পরিবর্তিত হয়েছে: ${val}`);
-    }
-
-    /* -------------------------------------------------------------
-       3. PURE FIREBASE REALTIME SYNCHRONIZATION
-    ------------------------------------------------------------- */
-    let userListenerRef = null;
-    let referListenerRef = null;
-    let withdrawListenerRef = null;
-
-    function syncFirebaseForUser(startParam) {
-      // Detach existing listeners if switching ID
-      if (userListenerRef) userListenerRef.off();
-      if (referListenerRef) referListenerRef.off();
-      if (withdrawListenerRef) withdrawListenerRef.off();
-
-      // 1. Sync Settings from Firebase Realtime DB
-      db.ref('settings').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          appSettings = { ...appSettings, ...data };
-          renderApp();
-        } else {
-          db.ref('settings').set(appSettings);
+      // Check for Referral parameter
+      let referrerId = null;
+      if (tg?.initDataUnsafe?.start_param) {
+        const param = tg.initDataUnsafe.start_param;
+        if (param.startsWith('ref_')) {
+          referrerId = param.replace('ref_', '');
         }
-      });
+      }
 
-      // 2. Sync Current User from `users/<id>`
-      userListenerRef = db.ref(`users/${currentUser.id}`);
-      userListenerRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        const today = new Date().toISOString().slice(0, 10);
+      // Sync User in Firebase
+      syncUserProfile(referrerId);
+    }
 
-        if (!data) {
-          // Initialize New User record in Firebase
-          const newUserPayload = {
+    // 4. FIREBASE USER SYNC & LISTENERS
+    function syncUserProfile(referrerId) {
+      const userRef = db.ref('users/' + currentUser.id);
+
+      userRef.once('value').then((snapshot) => {
+        if (!snapshot.exists()) {
+          // New User Registration
+          const newUser = {
             id: currentUser.id,
-            name: currentUser.name,
+            first_name: currentUser.first_name,
             username: currentUser.username,
-            avatarInitial: currentUser.avatarInitial,
-            balance: 0.00,
-            taskEarnings: 0.00,
-            referralEarnings: 0.00,
-            totalAdsWatched: 0,
-            dailyAdsWatchedToday: 0,
-            lastAdDate: today,
-            lastDailyClaimDate: "",
-            completedTasks: [],
+            balance: 5.00, // Welcome Bonus
+            task_earnings: 0.00,
+            referral_earnings: 0.00,
+            referral_count: 0,
+            daily_streak: 0,
+            last_daily_claim: 0,
+            level: 1,
+            completed_tasks: {},
             createdAt: firebase.database.ServerValue.TIMESTAMP
           };
 
-          if (startParam && startParam !== currentUser.id && /^\d+$/.test(startParam)) {
-            newUserPayload.referredBy = startParam;
-            processReferralInFirebase(startParam, currentUser.id, currentUser.name);
+          if (referrerId && referrerId !== currentUser.id) {
+            newUser.referred_by = referrerId;
+            rewardReferrer(referrerId, currentUser.first_name);
           }
 
-          userListenerRef.set(newUserPayload);
+          userRef.set(newUser).then(() => {
+            showToast("Welcome! ৳5.00 bonus credited!", "success");
+          });
         } else {
-          currentUser = {
-            ...currentUser,
-            ...data,
-            completedTasks: data.completedTasks || []
-          };
-
-          // Reset daily ad counters on a new date
-          if (currentUser.lastAdDate !== today) {
-            currentUser.dailyAdsWatchedToday = 0;
-            currentUser.lastAdDate = today;
-            userListenerRef.update({ dailyAdsWatchedToday: 0, lastAdDate: today });
-          }
-
-          renderApp();
+          // Existing User update basic info if changed
+          userRef.update({
+            first_name: currentUser.first_name,
+            username: currentUser.username
+          });
         }
       });
 
-      // 3. Sync Referrals subtree from `referrals/<id>`
-      referListenerRef = db.ref(`referrals/${currentUser.id}`);
-      referListenerRef.on('value', (snapshot) => {
-        currentUser.referrals = snapshot.val() || {};
-        renderReferralsList();
-        renderApp();
+      // Realtime listener for User Record
+      userRef.on('value', (snap) => {
+        if (snap.exists()) {
+          userRecord = snap.val();
+          updateUserInterface();
+        }
       });
 
-      // 4. Sync Withdrawals from `withdrawals/`
-      withdrawListenerRef = db.ref('withdrawals').orderByChild('userId').equalTo(currentUser.id);
-      withdrawListenerRef.on('value', (snapshot) => {
-        const val = snapshot.val() || {};
-        userWithdrawals = Object.keys(val).map(key => ({ id: key, ...val[key] })).reverse();
-        renderWithdrawalsList();
+      // Listen to System Settings (Ads & configuration)
+      db.ref('settings/ads').on('value', (snap) => {
+        if (snap.exists()) {
+          appSettings = { ...appSettings, ...snap.val() };
+        } else {
+          // Initialize default ad settings
+          db.ref('settings/ads').set(appSettings);
+        }
+        document.getElementById('ad-reward-display').textContent = Number(appSettings.rewardPerAd || 0.50).toFixed(2);
+        initAdsgram();
       });
 
-      // 5. If Super Admin, listen to all pending withdrawals across the app
-      if (currentUser.id === SUPER_ADMIN_ID) {
-        db.ref('withdrawals').on('value', (snapshot) => {
-          const val = snapshot.val() || {};
-          allWithdrawalsAdmin = Object.keys(val).map(key => ({ id: key, ...val[key] })).reverse();
-          renderAdminPendingWithdrawals();
-        });
-      }
-
-      // 6. Sync Leaderboard users from `users/`
-      db.ref('users').limitToLast(50).on('value', (snapshot) => {
-        const val = snapshot.val() || {};
-        leaderboardCache = Object.values(val);
-        renderLeaderboard();
+      // Listen to Dynamic Micro Tasks
+      db.ref('tasks').on('value', (snap) => {
+        allTasks = snap.val() || {};
+        renderTasksList();
+        if (currentUser.id === ADMIN_TELEGRAM_ID) {
+          renderAdminTasks();
+        }
       });
+
+      // Setup Refer Link
+      const botUsername = "TaskPayBDBot"; // Customize to your bot username
+      const referralLink = `https://t.me/${botUsername}?start=ref_${currentUser.id}`;
+      document.getElementById('refer-link-input').textContent = referralLink;
     }
 
-    function processReferralInFirebase(referrerId, newUserId, newUserName) {
-      const refUser = db.ref(`users/${referrerId}`);
-      refUser.once('value').then(snap => {
+    // 5. REFERRAL CREDIT HELPER
+    function rewardReferrer(refId, newUserName) {
+      const refUserRef = db.ref('users/' + refId);
+      refUserRef.once('value').then((snap) => {
         if (snap.exists()) {
-          const reward = appSettings.referReward || 50;
-          refUser.child('balance').transaction(b => (b || 0) + reward);
-          refUser.child('referralEarnings').transaction(r => (r || 0) + reward);
-
-          db.ref(`referrals/${referrerId}/${newUserId}`).set({
-            userId: newUserId,
+          const val = snap.val();
+          const bonus = 2.00;
+          refUserRef.update({
+            balance: (parseFloat(val.balance || 0) + bonus),
+            referral_earnings: (parseFloat(val.referral_earnings || 0) + bonus),
+            referral_count: (parseInt(val.referral_count || 0) + 1)
+          });
+          // Log referral record
+          db.ref(`users/${refId}/referrals/${currentUser.id}`).set({
             name: newUserName,
-            date: new Date().toISOString().slice(0, 10),
-            earned: reward
+            bonus: bonus,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
           });
         }
       });
     }
 
-    /* -------------------------------------------------------------
-       4. AUDIO & HAPTIC SYNTHESIZER
-    ------------------------------------------------------------- */
-    let audioCtx = null;
-    function getAudioContext() {
-      if (!audioCtx) {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) audioCtx = new AudioContext();
+    // 6. UI UPDATES
+    function updateUserInterface() {
+      if (!userRecord) return;
+
+      const balance = parseFloat(userRecord.balance || 0).toFixed(2);
+      const taskEarnings = parseFloat(userRecord.task_earnings || 0).toFixed(2);
+      const referEarnings = parseFloat(userRecord.referral_earnings || 0).toFixed(2);
+
+      // Balances
+      document.getElementById('top-bar-balance').textContent = balance;
+      document.getElementById('home-balance').textContent = balance;
+      document.getElementById('withdraw-avail-bal').textContent = balance;
+      document.getElementById('home-task-earnings').textContent = taskEarnings;
+      document.getElementById('home-refer-earnings').textContent = referEarnings;
+
+      // Level booster calculation
+      const level = Math.floor((userRecord.task_earnings || 0) / 25) + 1;
+      const levelNames = ["Bronze", "Silver", "Gold", "Platinum", "Diamond"];
+      const levelName = levelNames[Math.min(level - 1, levelNames.length - 1)];
+      document.getElementById('user-level-badge').textContent = `Lvl ${level} ${levelName}`;
+
+      // Streaks
+      const streak = userRecord.daily_streak || 0;
+      document.getElementById('streak-counter').textContent = streak;
+      document.getElementById('profile-streak-count').textContent = `${streak} Days`;
+
+      // Check daily streak claimable state
+      const now = Date.now();
+      const lastClaim = userRecord.last_daily_claim || 0;
+      const hoursSinceClaim = (now - lastClaim) / (1000 * 60 * 60);
+      const streakBtn = document.getElementById('claim-streak-btn');
+      if (hoursSinceClaim < 24) {
+        streakBtn.disabled = true;
+        streakBtn.textContent = "Claimed";
+        streakBtn.className = "bg-dark-surface border border-dark-border text-slate-500 font-bold text-xs px-4 py-2.5 rounded-xl cursor-not-allowed";
+      } else {
+        streakBtn.disabled = false;
+        streakBtn.textContent = "Claim";
+        streakBtn.className = "bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition cursor-pointer";
       }
-      if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-      return audioCtx;
+
+      // Refer Tab stats
+      document.getElementById('refer-total-count').textContent = userRecord.referral_count || 0;
+      document.getElementById('refer-total-income').textContent = referEarnings;
+      document.getElementById('profile-refer-count').textContent = userRecord.referral_count || 0;
+
+      // Profile Completed tasks count
+      const completedCount = Object.keys(userRecord.completed_tasks || {}).length;
+      document.getElementById('profile-completed-count').textContent = completedCount;
+
+      renderUserReferralsList();
+      renderWithdrawalsHistory();
+      renderRecentHomeActivity();
     }
 
-    function playSound(type) {
-      if (!currentUser.soundEnabled) return;
-      try {
-        const ctx = getAudioContext();
-        if (!ctx) return;
-        const now = ctx.currentTime;
+    // 7. DAILY STREAK CLAIM
+    function claimDailyStreak() {
+      if (!userRecord) return;
+      const now = Date.now();
+      const lastClaim = userRecord.last_daily_claim || 0;
+      const hoursSinceClaim = (now - lastClaim) / (1000 * 60 * 60);
 
-        if (type === 'coin') {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(987.77, now);
-          osc.frequency.exponentialRampToValueAtTime(1318.51, now + 0.12);
-          gain.gain.setValueAtTime(0.2, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now);
-          osc.stop(now + 0.35);
-        } else if (type === 'click') {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(600, now);
-          gain.gain.setValueAtTime(0.08, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now);
-          osc.stop(now + 0.05);
+      if (hoursSinceClaim < 24) {
+        showToast("Already claimed today. Come back tomorrow!", "error");
+        return;
+      }
+
+      // Check if streak is continuous (< 48 hours) or reset
+      let newStreak = (hoursSinceClaim <= 48) ? ((userRecord.daily_streak || 0) + 1) : 1;
+      const streakReward = 1.00;
+
+      db.ref('users/' + currentUser.id).update({
+        balance: (parseFloat(userRecord.balance || 0) + streakReward),
+        daily_streak: newStreak,
+        last_daily_claim: now
+      }).then(() => {
+        // Record log
+        db.ref('users/' + currentUser.id + '/transactions').push({
+          type: 'Daily Streak',
+          amount: streakReward,
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+        showToast(`Streak claimed! +৳${streakReward.toFixed(2)} added!`, "success");
+      });
+    }
+
+    // 8. AD NETWORK INTEGRATION (Adsgram & Adsterra Switcher)
+    function initAdsgram() {
+      if (window.Adsgram && appSettings.adsgramBlockId) {
+        try {
+          adsgramAdController = window.Adsgram.init({ blockId: appSettings.adsgramBlockId });
+        } catch (e) {
+          console.log("Adsgram init error:", e);
         }
-      } catch (e) {}
+      }
     }
 
-    function toggleSound() {
-      currentUser.soundEnabled = !currentUser.soundEnabled;
-      document.getElementById('soundToggleBtn').textContent = currentUser.soundEnabled ? '🔊' : '🔇';
-      showToast(currentUser.soundEnabled ? 'সাউন্ড চালু 🔊' : 'সাউন্ড বন্ধ 🔇');
-    }
+    function handleWatchAd() {
+      const adBtn = document.getElementById('watch-ad-btn');
+      adBtn.disabled = true;
+      adBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Loading...`;
 
-    function triggerHaptic(type = 'medium') {
-      try {
-        if (window.Telegram?.WebApp?.HapticFeedback) {
-          if (type === 'success') {
-            window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-          } else {
-            window.Telegram.WebApp.HapticFeedback.impactOccurred(type);
-          }
+      const reward = parseFloat(appSettings.rewardPerAd || 0.50);
+
+      if (appSettings.network === 'adsterra') {
+        // Adsterra Direct Link / Smartlink Flow
+        showToast("Opening sponsored link. Stay 10 seconds...", "info");
+        const url = appSettings.adsterraUrl || "https://google.com";
+
+        if (tg && tg.openLink) {
+          tg.openLink(url);
+        } else {
+          window.open(url, '_blank');
         }
-      } catch (e) {}
-    }
 
-    /* -------------------------------------------------------------
-       5. LEVEL CALCULATIONS
-    ------------------------------------------------------------- */
-    function getUserLevel() {
-      const completedTasksCount = (currentUser.completedTasks || []).length;
-      const referralsCount = Object.keys(currentUser.referrals || {}).length;
+        setTimeout(() => {
+          creditAdReward(reward);
+          adBtn.disabled = false;
+          adBtn.innerHTML = `<i class="fa-solid fa-video"></i> Watch Ad`;
+        }, 10000);
 
-      let currentLevel = LEVEL_TIERS[0];
-      let nextLevel = LEVEL_TIERS[1];
-
-      for (let i = LEVEL_TIERS.length - 1; i >= 0; i--) {
-        const tier = LEVEL_TIERS[i];
-        if (completedTasksCount >= tier.tasksReq && referralsCount >= tier.refsReq) {
-          currentLevel = tier;
-          nextLevel = LEVEL_TIERS[i + 1] || null;
-          break;
+      } else {
+        // Adsgram Flow
+        if (adsgramAdController) {
+          adsgramAdController.show().then((result) => {
+            creditAdReward(reward);
+            adBtn.disabled = false;
+            adBtn.innerHTML = `<i class="fa-solid fa-video"></i> Watch Ad`;
+          }).catch((err) => {
+            // Fallback simulated ad reward if ad blocker or error occurs
+            showToast("Ad unavailable. Showing fallback promo...", "info");
+            setTimeout(() => {
+              creditAdReward(reward);
+              adBtn.disabled = false;
+              adBtn.innerHTML = `<i class="fa-solid fa-video"></i> Watch Ad`;
+            }, 3000);
+          });
+        } else {
+          // Direct fallback if Adsgram SDK was not ready
+          setTimeout(() => {
+            creditAdReward(reward);
+            adBtn.disabled = false;
+            adBtn.innerHTML = `<i class="fa-solid fa-video"></i> Watch Ad`;
+          }, 3000);
         }
       }
+    }
 
-      let progress = 100;
-      if (nextLevel) {
-        const taskProg = Math.min(completedTasksCount / (nextLevel.tasksReq || 1), 1);
-        const refProg = Math.min(referralsCount / (nextLevel.refsReq || 1), 1);
-        progress = Math.round(((taskProg + refProg) / 2) * 100);
+    function creditAdReward(reward) {
+      if (!userRecord) return;
+      const newBal = parseFloat(userRecord.balance || 0) + reward;
+      const newTaskEarn = parseFloat(userRecord.task_earnings || 0) + reward;
+
+      db.ref('users/' + currentUser.id).update({
+        balance: newBal,
+        task_earnings: newTaskEarn
+      }).then(() => {
+        db.ref('users/' + currentUser.id + '/transactions').push({
+          type: 'Video Ad Reward',
+          amount: reward,
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+        showToast(`Ad Completed! +৳${reward.toFixed(2)} BDT received!`, "success");
+      });
+    }
+
+    // 9. DYNAMIC MICRO TASKS ENGINE
+    function renderTasksList() {
+      const container = document.getElementById('tasks-list');
+      const countBadge = document.getElementById('tasks-count-badge');
+      const taskKeys = Object.keys(allTasks);
+
+      countBadge.textContent = `${taskKeys.length} Tasks`;
+
+      if (taskKeys.length === 0) {
+        container.innerHTML = `
+          <div class="bg-dark-card border border-dark-border rounded-2xl p-8 text-center text-slate-500 text-xs">
+            <i class="fa-solid fa-list-check text-2xl mb-2 text-slate-600 block"></i>
+            No active micro tasks at this moment. Please check back soon!
+          </div>
+        `;
+        return;
       }
 
-      return { currentLevel, nextLevel, progress };
-    }
+      const completed = userRecord?.completed_tasks || {};
 
-    /* -------------------------------------------------------------
-       6. UI RENDERING
-    ------------------------------------------------------------- */
-    function renderApp() {
-      const u = currentUser;
-      const { currentLevel, progress } = getUserLevel();
-      const refCount = Object.keys(u.referrals || {}).length;
+      let html = '';
+      taskKeys.forEach((taskId) => {
+        const task = allTasks[taskId];
+        const isDone = !!completed[taskId];
 
-      // Header
-      document.getElementById('headerUserName').textContent = u.name;
-      document.getElementById('telegramHandleText').textContent = 'ID: ' + u.id;
-      document.getElementById('userAvatarInitial').textContent = u.avatarInitial || 'U';
-      document.getElementById('headerBalance').textContent = (u.balance || 0).toFixed(2);
-      document.getElementById('headerLevelPill').innerHTML = `<span>${currentLevel.icon} Lvl ${currentLevel.level}</span>`;
-
-      // Home
-      document.getElementById('homeMainBalance').textContent = (u.balance || 0).toFixed(2);
-      document.getElementById('homeTaskEarnings').textContent = '৳' + (u.taskEarnings || 0).toFixed(2);
-      document.getElementById('homeReferralEarnings').textContent = '৳' + (u.referralEarnings || 0).toFixed(2);
-      document.getElementById('homeLevelBadgeIcon').textContent = currentLevel.icon;
-      document.getElementById('homeLevelTierName').textContent = currentLevel.name;
-      document.getElementById('homeLevelMultiplierBadge').textContent = `${currentLevel.multiplier}x Boost`;
-      document.getElementById('homeLevelProgressBar').style.width = `${progress}%`;
-      document.getElementById('homeLevelPercentText').textContent = `${progress}%`;
-
-      // Earn Tab
-      const boostedAdReward = (appSettings.adReward * currentLevel.multiplier);
-      document.getElementById('earnAdRewardAmountText').textContent = `+৳${boostedAdReward.toFixed(2)}`;
-      document.getElementById('earnAdMultiplierTag').textContent = `${currentLevel.multiplier}x Boosted`;
-      document.getElementById('dailyAdCounterText').textContent = `${Math.max(0, appSettings.dailyAdLimit - (u.dailyAdsWatchedToday || 0))} / ${appSettings.dailyAdLimit}`;
-
-      renderTasksList(currentLevel.multiplier);
-
-      // Refer Tab
-      const bot = appSettings.botUsername || 'taskpaybd2bot';
-      const refUrl = `https://t.me/${bot}?start=${u.id}`;
-      document.getElementById('myReferralCode').textContent = u.id;
-      document.getElementById('referRewardBannerText').textContent = `৳${appSettings.referReward.toFixed(2)}`;
-      document.getElementById('myReferralUrlText').textContent = refUrl;
-      document.getElementById('referTotalCount').textContent = refCount;
-      document.getElementById('referTotalIncome').textContent = '৳' + (u.referralEarnings || 0).toFixed(2);
-
-      // Withdraw Tab
-      document.getElementById('withdrawAvailBalanceText').textContent = '৳' + (u.balance || 0).toFixed(2);
-      document.getElementById('minWithdrawSpan').textContent = `৳${appSettings.minWithdraw}`;
-      document.getElementById('withdrawAmount').min = appSettings.minWithdraw;
-      document.getElementById('withdrawReferralCondition').textContent = `${refCount} / ${appSettings.minReferralsForWithdraw} রেফারেল`;
-      document.getElementById('withdrawReferralCondition').className = refCount >= appSettings.minReferralsForWithdraw ? 'font-bold text-emerald-400' : 'font-bold text-amber-400';
-
-      // Profile Tab
-      document.getElementById('profileAvatarInitial').textContent = u.avatarInitial || 'U';
-      document.getElementById('profileFullName').textContent = u.name;
-      document.getElementById('profileTelegramId').textContent = 'ID: ' + u.id;
-      document.getElementById('profileTierBadge').innerHTML = `<span>${currentLevel.icon} Level ${currentLevel.level} (${currentLevel.multiplier}x)</span>`;
-      document.getElementById('profileCompletedTasksCount').textContent = (u.completedTasks || []).length;
-      document.getElementById('profileTotalAdsWatched').textContent = u.totalAdsWatched || 0;
-      document.getElementById('profileTotalRefs').textContent = refCount;
-    }
-
-    function renderTasksList(multiplier) {
-      const container = document.getElementById('tasksContainer');
-      const completed = currentUser.completedTasks || [];
-      const remaining = allTasks.filter(t => !completed.includes(t.id)).length;
-      document.getElementById('tasksRemainingBadge').textContent = `${remaining}টি কাজ বাকি`;
-
-      container.innerHTML = allTasks.map(t => {
-        const isDone = completed.includes(t.id);
-        const reward = (t.baseReward * multiplier).toFixed(2);
-        return `
-          <div class="p-3.5 rounded-2xl bg-zinc-900 border ${isDone ? 'border-zinc-800 opacity-60' : 'border-zinc-700/80 hover:border-zinc-600'} flex items-center justify-between gap-3 transition-all">
+        html += `
+          <div class="bg-dark-card border border-dark-border rounded-2xl p-4 flex items-center justify-between gap-3 shadow-md">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-lg flex-shrink-0">
-                ${t.icon}
+              <div class="w-10 h-10 rounded-xl bg-slate-800 text-brand-400 flex items-center justify-center text-base border border-dark-border">
+                <i class="fa-solid fa-circle-check"></i>
               </div>
               <div>
-                <h4 class="text-xs font-bold text-white line-clamp-1">${t.title}</h4>
-                <div class="flex items-center gap-1.5 mt-0.5">
-                  <span class="text-xs font-black text-emerald-400">+৳${reward}</span>
-                  ${multiplier > 1.0 ? `<span class="text-[9px] font-bold text-amber-300 bg-amber-500/20 px-1 rounded">${multiplier}x Boost</span>` : ''}
+                <h4 class="text-xs font-bold text-slate-100 line-clamp-1">${escapeHtml(task.title)}</h4>
+                <div class="flex items-center gap-2 mt-0.5">
+                  <span class="text-xs text-brand-400 font-bold">৳ ${Number(task.reward).toFixed(2)} BDT</span>
+                  <span class="text-[10px] text-slate-500">• Micro Task</span>
                 </div>
               </div>
             </div>
-            ${isDone ? `
-              <span class="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl flex items-center gap-1">
-                ✓ সম্পন্ন
-              </span>
-            ` : `
-              <button onclick="handleTaskClick('${t.id}')" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs px-3.5 py-1.5 rounded-xl shadow-md active:scale-95 transition-all">
-                শুরু করুন
-              </button>
-            `}
+
+            <div>
+              ${
+                isDone
+                  ? `<button disabled class="bg-dark-surface border border-dark-border text-slate-500 font-bold text-xs px-3.5 py-2 rounded-xl cursor-not-allowed">Completed</button>`
+                  : `<button onclick="startMicroTask('${taskId}')" id="task-btn-${taskId}" class="bg-gradient-to-r from-brand-600 to-emerald-500 hover:from-brand-500 hover:to-emerald-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl shadow-md shadow-brand-500/10 active:scale-95 transition">Start</button>`
+              }
+            </div>
           </div>
         `;
-      }).join('');
-    }
-
-    function renderReferralsList() {
-      const container = document.getElementById('referredFriendsList');
-      const refs = Object.values(currentUser.referrals || {});
-      if (refs.length === 0) {
-        container.innerHTML = '<p class="text-zinc-500 text-center py-2">এখনো কোনো বন্ধু যোগ দেয়নি</p>';
-      } else {
-        container.innerHTML = refs.map(r => `
-          <div class="flex items-center justify-between p-2 rounded-xl bg-zinc-800/40 border border-zinc-800">
-            <div>
-              <p class="font-bold text-white text-xs">${r.name}</p>
-              <span class="text-[10px] text-zinc-400">তারিখ: ${r.date}</span>
-            </div>
-            <span class="font-extrabold text-xs text-emerald-400">+৳${r.earned || 50}.00</span>
-          </div>
-        `).join('');
-      }
-    }
-
-    function renderWithdrawalsList() {
-      const container = document.getElementById('withdrawHistoryList');
-      if (userWithdrawals.length === 0) {
-        container.innerHTML = '<p class="text-zinc-500 text-center py-2">কোনো উত্তোলনের রেকর্ড নেই</p>';
-      } else {
-        container.innerHTML = userWithdrawals.map(w => `
-          <div class="flex items-center justify-between p-2.5 rounded-xl bg-zinc-800/40 border border-zinc-800">
-            <div>
-              <p class="font-bold text-white text-xs">${w.method} (${w.account})</p>
-              <span class="text-[10px] text-zinc-400">${new Date(w.timestamp).toLocaleDateString()}</span>
-            </div>
-            <div class="text-right">
-              <span class="font-extrabold text-xs text-white block">৳${w.amount.toFixed(2)}</span>
-              <span class="text-[9px] font-bold px-1.5 py-0.2 rounded-full ${w.status === 'approved' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}">${w.status === 'approved' ? 'অনুমোদিত' : 'পেন্ডিং'}</span>
-            </div>
-          </div>
-        `).join('');
-      }
-    }
-
-    function renderLeaderboard() {
-      const sorted = leaderboardCache.map(u => ({
-        name: u.name || 'User',
-        id: u.id,
-        refs: Object.keys(u.referrals || {}).length,
-        earned: u.referralEarnings || 0
-      })).sort((a, b) => b.refs - a.refs);
-
-      const top3 = sorted.slice(0, 3);
-      const podium = document.getElementById('podiumContainer');
-      if (podium && top3.length > 0) {
-        podium.innerHTML = `
-          <div class="bg-zinc-900 border border-slate-700 rounded-2xl p-2">
-            <span class="text-xl">🥈</span>
-            <p class="text-xs font-bold text-white truncate mt-1">${top3[1]?.name || '-'}</p>
-            <p class="text-[10px] text-zinc-400">${top3[1]?.refs || 0} রেফার</p>
-          </div>
-          <div class="bg-gradient-to-b from-amber-500/20 to-zinc-900 border border-amber-500/50 rounded-2xl p-2.5 -translate-y-1 shadow-lg">
-            <span class="text-2xl">🥇</span>
-            <p class="text-xs font-black text-amber-300 truncate mt-1">${top3[0]?.name || '-'}</p>
-            <p class="text-[10px] font-extrabold text-white">${top3[0]?.refs || 0} রেফার</p>
-          </div>
-          <div class="bg-zinc-900 border border-amber-800 rounded-2xl p-2">
-            <span class="text-xl">🥉</span>
-            <p class="text-xs font-bold text-white truncate mt-1">${top3[2]?.name || '-'}</p>
-            <p class="text-[10px] text-zinc-400">${top3[2]?.refs || 0} রেফার</p>
-          </div>
-        `;
-      }
-
-      const list = document.getElementById('leaderboardList');
-      if (list) {
-        list.innerHTML = sorted.slice(3, 10).map((item, idx) => `
-          <div class="flex items-center justify-between p-2 rounded-xl ${item.id === currentUser.id ? 'bg-amber-500/20 border border-amber-500/50' : 'bg-zinc-900 border border-zinc-800'}">
-            <div class="flex items-center gap-2">
-              <span class="w-5 text-center font-bold text-zinc-400">#${idx + 4}</span>
-              <span class="font-bold text-white text-xs">${item.name} ${item.id === currentUser.id ? '(আপনি)' : ''}</span>
-            </div>
-            <span class="font-black text-xs text-emerald-400">${item.refs} রেফার</span>
-          </div>
-        `).join('');
-      }
-
-      const myRank = sorted.findIndex(item => item.id === currentUser.id) + 1;
-      const myRefs = Object.keys(currentUser.referrals || {}).length;
-      document.getElementById('homeRankPill').textContent = `র‍্যাংক #${myRank || 1}`;
-      document.getElementById('profileRankBadge').innerHTML = `<span>🏆 Rank #${myRank || 1} (${myRefs} refs)</span>`;
-      document.getElementById('leaderboardMyRankText').textContent = `র‍্যাংক #${myRank || 1} • ${myRefs} রেফারেল`;
-    }
-
-    /* -------------------------------------------------------------
-       7. USER ACTIONS & CASH-OUT (FIREBASE UPDATES)
-    ------------------------------------------------------------- */
-    function switchTab(tabId) {
-      playSound('click');
-      triggerHaptic('light');
-
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      document.getElementById('tab-' + tabId).classList.remove('hidden');
-
-      document.querySelectorAll('.nav-button').forEach(btn => {
-        btn.classList.remove('text-emerald-400', 'font-bold');
-        btn.classList.add('text-zinc-400', 'font-medium');
       });
 
-      const activeBtn = document.getElementById('nav-btn-' + tabId);
-      if (activeBtn) {
-        activeBtn.classList.remove('text-zinc-400', 'font-medium');
-        activeBtn.classList.add('text-emerald-400', 'font-bold');
+      container.innerHTML = html;
+    }
+
+    function startMicroTask(taskId) {
+      const task = allTasks[taskId];
+      if (!task || !userRecord) return;
+
+      const btn = document.getElementById(`task-btn-${taskId}`);
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Wait 10s`;
       }
+
+      // Open target URL
+      if (tg && tg.openLink) {
+        tg.openLink(task.url);
+      } else {
+        window.open(task.url, '_blank');
+      }
+
+      showToast("Complete task in external window. Verifying in 10s...", "info");
+
+      // Verify and Credit after 10-second timer
+      setTimeout(() => {
+        const reward = parseFloat(task.reward || 0);
+        const updates = {};
+        updates[`/users/${currentUser.id}/balance`] = parseFloat(userRecord.balance || 0) + reward;
+        updates[`/users/${currentUser.id}/task_earnings`] = parseFloat(userRecord.task_earnings || 0) + reward;
+        updates[`/users/${currentUser.id}/completed_tasks/${taskId}`] = true;
+
+        db.ref().update(updates).then(() => {
+          db.ref(`users/${currentUser.id}/transactions`).push({
+            type: `Task: ${task.title}`,
+            amount: reward,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+          });
+          showToast(`Task verified! +৳${reward.toFixed(2)} BDT awarded!`, "success");
+        }).catch((err) => {
+          showToast("Error recording task completion.", "error");
+        });
+      }, 10000);
+    }
+
+    // 10. WITHDRAWAL ENGINE
+    function handleWithdrawSubmit(e) {
+      e.preventDefault();
+      if (!userRecord) return;
+
+      const method = document.querySelector('input[name="withdraw-method"]:checked').value;
+      const account = document.getElementById('withdraw-account').value.trim();
+      const amount = parseFloat(document.getElementById('withdraw-amount').value);
+      const currentBalance = parseFloat(userRecord.balance || 0);
+
+      if (!account || account.length < 11) {
+        showToast("Please enter a valid 11-digit mobile number.", "error");
+        return;
+      }
+
+      if (isNaN(amount) || amount < 50) {
+        showToast("Minimum withdrawal is 50 BDT.", "error");
+        return;
+      }
+
+      if (amount > currentBalance) {
+        showToast("Insufficient balance for this withdrawal.", "error");
+        return;
+      }
+
+      const submitBtn = document.getElementById('withdraw-submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing...`;
+
+      // Deduct balance immediately & push to withdrawals queue
+      const newBalance = currentBalance - amount;
+      const newWithdrawalKey = db.ref().child('withdrawals').push().key;
+
+      const withdrawalData = {
+        id: newWithdrawalKey,
+        userId: currentUser.id,
+        userName: currentUser.first_name,
+        userPhone: account,
+        method: method,
+        amount: amount,
+        status: "pending",
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+      };
+
+      const updates = {};
+      updates[`/users/${currentUser.id}/balance`] = newBalance;
+      updates[`/withdrawals/${newWithdrawalKey}`] = withdrawalData;
+      updates[`/users/${currentUser.id}/withdrawals/${newWithdrawalKey}`] = withdrawalData;
+
+      db.ref().update(updates).then(() => {
+        showToast("Withdrawal requested! Admin will review shortly.", "success");
+        document.getElementById('withdraw-form').reset();
+      }).catch((err) => {
+        showToast("Transaction failed. Please try again.", "error");
+      }).finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `Request Cashout`;
+      });
+    }
+
+    function renderWithdrawalsHistory() {
+      const container = document.getElementById('withdrawals-history-list');
+      const userWithdrawals = userRecord?.withdrawals || {};
+      const keys = Object.keys(userWithdrawals).reverse();
+
+      if (keys.length === 0) {
+        container.innerHTML = `<div class="text-center text-slate-500 py-3">No cashout requests yet.</div>`;
+        return;
+      }
+
+      let html = '';
+      keys.forEach((key) => {
+        const item = userWithdrawals[key];
+        const statusColors = {
+          pending: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+          approved: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+          rejected: "bg-rose-500/10 text-rose-400 border-rose-500/30"
+        };
+        const badgeClass = statusColors[item.status] || statusColors.pending;
+
+        html += `
+          <div class="bg-dark-bg/60 border border-dark-border/60 p-3 rounded-xl flex items-center justify-between">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-200">${item.method}</span>
+                <span class="text-[10px] text-slate-500 font-mono">${item.userPhone}</span>
+              </div>
+              <span class="text-[10px] text-slate-400">${item.timestamp ? new Date(item.timestamp).toLocaleDateString() : 'Recent'}</span>
+            </div>
+            <div class="text-right">
+              <span class="font-bold text-slate-100 block">৳ ${Number(item.amount).toFixed(2)}</span>
+              <span class="text-[10px] uppercase font-bold border px-1.5 py-0.2 rounded ${badgeClass}">${item.status}</span>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function renderRecentHomeActivity() {
+      const container = document.getElementById('home-recent-activity');
+      const transactions = userRecord?.transactions || {};
+      const keys = Object.keys(transactions).slice(-4).reverse();
+
+      if (keys.length === 0) {
+        container.innerHTML = `<div class="text-center text-slate-500 py-2">No recent activity.</div>`;
+        return;
+      }
+
+      let html = '';
+      keys.forEach((k) => {
+        const tx = transactions[k];
+        html += `
+          <div class="flex items-center justify-between py-1.5 border-b border-dark-border/40 last:border-0">
+            <span class="text-slate-300 truncate max-w-[200px]">${escapeHtml(tx.type)}</span>
+            <span class="text-brand-400 font-bold font-mono">+৳${Number(tx.amount).toFixed(2)}</span>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function renderUserReferralsList() {
+      const container = document.getElementById('referrals-list');
+      const refs = userRecord?.referrals || {};
+      const keys = Object.keys(refs);
+
+      if (keys.length === 0) {
+        container.innerHTML = `<div class="text-center text-slate-500 py-3">No friends invited yet. Share your referral link!</div>`;
+        return;
+      }
+
+      let html = '';
+      keys.forEach((refId) => {
+        const r = refs[refId];
+        html += `
+          <div class="flex items-center justify-between py-2 border-b border-dark-border/40 last:border-0">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs">
+                ${(r.name || 'U')[0].toUpperCase()}
+              </div>
+              <div>
+                <span class="font-bold text-slate-200 block text-xs">${escapeHtml(r.name || 'Friend')}</span>
+                <span class="text-[10px] text-slate-500 font-mono">ID: ${refId}</span>
+              </div>
+            </div>
+            <span class="text-brand-400 font-semibold font-mono text-xs">+৳${Number(r.bonus || 2.0).toFixed(2)}</span>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function copyReferralLink() {
+      const text = document.getElementById('refer-link-input').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("Referral link copied to clipboard!", "success");
+      }).catch(() => {
+        showToast("Failed to copy link.", "error");
+      });
+    }
+
+    // 11. SUPER ADMIN DASHBOARD LOGIC
+    function openAdminModal() {
+      if (currentUser.id !== ADMIN_TELEGRAM_ID) {
+        showToast("Access Denied: Admins Only", "error");
+        return;
+      }
+      document.getElementById('admin-modal').classList.remove('hidden');
+      loadAdminDashboardData();
+    }
+
+    function closeAdminModal() {
+      document.getElementById('admin-modal').classList.add('hidden');
+    }
+
+    function loadAdminDashboardData() {
+      // 1. Total users
+      db.ref('users').on('value', (snap) => {
+        document.getElementById('admin-metric-users').textContent = snap.numChildren();
+      });
+
+      // 2. Metrics & Withdrawal Manager
+      db.ref('withdrawals').on('value', (snap) => {
+        const withdrawals = snap.val() || {};
+        const keys = Object.keys(withdrawals);
+        let pendingCount = 0;
+        let pendingHtml = '';
+
+        keys.forEach((key) => {
+          const item = withdrawals[key];
+          if (item.status === 'pending') {
+            pendingCount++;
+            pendingHtml += `
+              <div class="bg-dark-card border border-dark-border p-3 rounded-xl space-y-2">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h5 class="font-bold text-white text-xs">${escapeHtml(item.userName || 'User')}</h5>
+                    <p class="text-[11px] text-brand-400 font-mono">${item.method}: ${item.userPhone}</p>
+                    <p class="text-[10px] text-slate-500">User ID: ${item.userId}</p>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-sm font-extrabold text-white font-mono">৳ ${Number(item.amount).toFixed(2)}</span>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 pt-1 border-t border-dark-border/40">
+                  <button onclick="updateWithdrawalStatus('${key}', '${item.userId}', ${item.amount}, 'approved')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 rounded-lg text-[11px] transition">
+                    Approve
+                  </button>
+                  <button onclick="updateWithdrawalStatus('${key}', '${item.userId}', ${item.amount}, 'rejected')" class="bg-rose-600 hover:bg-rose-500 text-white font-bold py-1.5 rounded-lg text-[11px] transition">
+                    Reject & Refund
+                  </button>
+                </div>
+              </div>
+            `;
+          }
+        });
+
+        document.getElementById('admin-metric-pending').textContent = pendingCount;
+        document.getElementById('admin-withdrawals-list').innerHTML = pendingHtml || `<div class="text-slate-500 text-center py-3">No pending withdrawals.</div>`;
+      });
+
+      // 3. Ad settings inputs
+      document.getElementById('admin-adsgram-id').value = appSettings.adsgramBlockId || '';
+      document.getElementById('admin-adsterra-url').value = appSettings.adsterraUrl || '';
+      document.getElementById('admin-ad-reward').value = appSettings.rewardPerAd || 0.50;
+      if (appSettings.network === 'adsterra') {
+        document.getElementById('ad-net-adsterra').checked = true;
+      } else {
+        document.getElementById('ad-net-adsgram').checked = true;
+      }
+    }
+
+    function saveAdSettings() {
+      const network = document.querySelector('input[name="admin-ad-network"]:checked').value;
+      const adsgramId = document.getElementById('admin-adsgram-id').value.trim();
+      const adsterraUrl = document.getElementById('admin-adsterra-url').value.trim();
+      const reward = parseFloat(document.getElementById('admin-ad-reward').value) || 0.50;
+
+      const newSettings = {
+        network: network,
+        adsgramBlockId: adsgramId,
+        adsterraUrl: adsterraUrl,
+        rewardPerAd: reward
+      };
+
+      db.ref('settings/ads').set(newSettings).then(() => {
+        showToast("Ad settings updated successfully!", "success");
+      });
+    }
+
+    function handleAdminAddTask(e) {
+      e.preventDefault();
+      const title = document.getElementById('admin-task-title').value.trim();
+      const url = document.getElementById('admin-task-url').value.trim();
+      const reward = parseFloat(document.getElementById('admin-task-reward').value);
+
+      if (!title || !url || isNaN(reward)) {
+        showToast("Please fill all task fields correctly.", "error");
+        return;
+      }
+
+      const newTaskKey = db.ref('tasks').push().key;
+      const newTask = {
+        id: newTaskKey,
+        title: title,
+        url: url,
+        reward: reward,
+        createdAt: firebase.database.ServerValue.TIMESTAMP
+      };
+
+      db.ref('tasks/' + newTaskKey).set(newTask).then(() => {
+        showToast("Task added to Firebase & user feeds!", "success");
+        document.getElementById('admin-task-form').reset();
+      });
+    }
+
+    function deleteAdminTask(taskId) {
+      if (confirm("Are you sure you want to delete this task?")) {
+        db.ref('tasks/' + taskId).remove().then(() => {
+          showToast("Task deleted.", "info");
+        });
+      }
+    }
+
+    function renderAdminTasks() {
+      const container = document.getElementById('admin-tasks-list');
+      const keys = Object.keys(allTasks);
+      document.getElementById('admin-metric-tasks').textContent = keys.length;
+
+      if (keys.length === 0) {
+        container.innerHTML = `<div class="text-slate-500 text-center py-2">No live tasks.</div>`;
+        return;
+      }
+
+      let html = '';
+      keys.forEach((key) => {
+        const task = allTasks[key];
+        html += `
+          <div class="flex items-center justify-between p-2 rounded-lg bg-dark-card border border-dark-border text-xs">
+            <div class="truncate max-w-[200px]">
+              <span class="font-bold text-white block truncate">${escapeHtml(task.title)}</span>
+              <span class="text-[10px] text-brand-400 font-semibold">৳ ${Number(task.reward).toFixed(2)} BDT</span>
+            </div>
+            <button onclick="deleteAdminTask('${key}')" class="text-rose-400 hover:text-rose-300 p-1.5 transition">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function updateWithdrawalStatus(withdrawId, userId, amount, status) {
+      const updates = {};
+      updates[`/withdrawals/${withdrawId}/status`] = status;
+      updates[`/users/${userId}/withdrawals/${withdrawId}/status`] = status;
+
+      // If rejected, refund the money back to user balance
+      if (status === 'rejected') {
+        db.ref('users/' + userId).once('value').then((snap) => {
+          if (snap.exists()) {
+            const currentBal = parseFloat(snap.val().balance || 0);
+            updates[`/users/${userId}/balance`] = currentBal + parseFloat(amount);
+            db.ref().update(updates).then(() => {
+              showToast("Withdrawal rejected & balance refunded.", "info");
+            });
+          }
+        });
+      } else {
+        db.ref().update(updates).then(() => {
+          showToast(`Withdrawal marked as ${status}.`, "success");
+        });
+      }
+    }
+
+    // 12. TAB SWITCHER
+    function switchTab(tabId) {
+      const tabs = ['home', 'earn', 'refer', 'withdraw', 'profile'];
+      tabs.forEach((tab) => {
+        const sec = document.getElementById('tab-' + tab);
+        const btn = document.getElementById('nav-btn-' + tab);
+        if (tab === tabId) {
+          sec.classList.remove('hidden');
+          btn.classList.add('active-nav', 'text-brand-500');
+          btn.classList.remove('text-slate-400');
+        } else {
+          sec.classList.add('hidden');
+          btn.classList.remove('active-nav', 'text-brand-500');
+          btn.classList.add('text-slate-400');
+        }
+      });
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    async function copyMyInviteLink() {
-      const bot = appSettings.botUsername || 'taskpaybd2bot';
-      const refUrl = `https://t.me/${bot}?start=${currentUser.id}`;
+    // 13. TOAST NOTIFICATION UTILITY
+    let toastTimeout;
+    function showToast(msg, type = "info") {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+      const toastIcon = document.getElementById('toast-icon');
 
-      try {
-        if (navigator?.clipboard?.writeText) {
-          await navigator.clipboard.writeText(refUrl);
-        } else {
-          const ta = document.createElement('textarea');
-          ta.value = refUrl;
-          ta.style.position = 'fixed';
-          ta.style.left = '-9999px';
-          document.body.appendChild(ta);
-          ta.focus();
-          ta.select();
-          document.execCommand('copy');
-          document.body.removeChild(ta);
-        }
-      } catch (e) {}
+      toastMsg.textContent = msg;
 
-      triggerHaptic('success');
-      playSound('coin');
-
-      const btn = document.getElementById('copyMyInviteLinkBtn');
-      const text = document.getElementById('copyMyInviteLinkBtnText');
-      if (btn && text) {
-        btn.classList.add('bg-emerald-600', 'ring-2', 'ring-emerald-400/50');
-        text.textContent = '✓ ইনভাইট লিংক কপি হয়েছে!';
-        setTimeout(() => {
-          btn.classList.remove('bg-emerald-600', 'ring-2', 'ring-emerald-400/50');
-          text.textContent = 'Copy My Invite Link (লিংক কপি করুন)';
-        }, 2500);
-      }
-      showToast('টেলিগ্রাম ইনভাইট লিংক ক্লিপবোর্ডে কপি করা হয়েছে! 🔗');
-    }
-
-    function copyReferralCode() {
-      playSound('click');
-      navigator.clipboard.writeText(currentUser.id);
-      triggerHaptic('success');
-      showToast('রেফারেল আইডি কপি হয়েছে! 📋');
-    }
-
-    function shareOnTelegram() {
-      playSound('click');
-      const bot = appSettings.botUsername || 'taskpaybd2bot';
-      const refUrl = `https://t.me/${bot}?start=${currentUser.id}`;
-      const shareText = encodeURIComponent(`🔥 TaskPay BD-এ কাজ করে বিকাশ ও নগদে সরাসরি টাকা ইনকাম করুন! আমার রেফারেল আইডি: ${currentUser.id}\nজয়েন করার লিংক:`);
-      window.open(`https://t.me/share/url?url=${encodeURIComponent(refUrl)}&text=${shareText}`, '_blank');
-    }
-
-    // Rewarded Video Ads
-    let adCountdownTimer = null;
-    function watchRewardedAd() {
-      if ((currentUser.dailyAdsWatchedToday || 0) >= appSettings.dailyAdLimit) {
-        showToast('আজকের বিজ্ঞাপনের সীমা শেষ হয়েছে! কাল আবার আসুন।', '⚠️');
-        return;
-      }
-
-      const { currentLevel } = getUserLevel();
-      const reward = (appSettings.adReward * currentLevel.multiplier);
-
-      if (appSettings.adMode === 'adsgram' && window.Adsgram) {
-        try {
-          const AdController = window.Adsgram.init({ blockId: appSettings.adBlockId || 'int-7557' });
-          AdController.show().then(() => {
-            creditAdRewardToFirebase(reward);
-          }).catch(() => {
-            openSimulatedAd(reward);
-          });
-          return;
-        } catch (e) {
-          openSimulatedAd(reward);
-          return;
-        }
-      }
-
-      openSimulatedAd(reward);
-    }
-
-    function openSimulatedAd(reward) {
-      document.getElementById('adModalRewardText').textContent = `+৳${reward.toFixed(2)}`;
-      document.getElementById('adModal').classList.remove('hidden');
-
-      let secondsLeft = 15;
-      const badge = document.getElementById('adCountdownBadge');
-      const closeBtn = document.getElementById('adCloseBtn');
-      const prog = document.getElementById('adVideoProgressBar');
-
-      closeBtn.disabled = true;
-      closeBtn.classList.add('cursor-not-allowed', 'text-zinc-500');
-      closeBtn.classList.remove('bg-emerald-500', 'text-zinc-950', 'hover:bg-emerald-400');
-      prog.style.width = '0%';
-
-      setTimeout(() => { prog.style.width = '100%'; }, 50);
-
-      clearInterval(adCountdownTimer);
-      adCountdownTimer = setInterval(() => {
-        secondsLeft--;
-        badge.textContent = `${secondsLeft}s`;
-        closeBtn.textContent = `বিজ্ঞাপন সমাপ্তির জন্য অপেক্ষা করুন... (${secondsLeft})`;
-
-        if (secondsLeft <= 0) {
-          clearInterval(adCountdownTimer);
-          badge.textContent = 'সমাপ্ত ✓';
-          closeBtn.disabled = false;
-          closeBtn.textContent = `পুরস্কার সংগ্রহ করুন (+৳${reward.toFixed(2)})`;
-          closeBtn.classList.remove('cursor-not-allowed', 'text-zinc-500');
-          closeBtn.classList.add('bg-emerald-500', 'text-zinc-950', 'hover:bg-emerald-400', 'font-black');
-          triggerHaptic('success');
-        }
-      }, 1000);
-    }
-
-    function closeAdModal(completed) {
-      clearInterval(adCountdownTimer);
-      document.getElementById('adModal').classList.add('hidden');
-      if (completed) {
-        const { currentLevel } = getUserLevel();
-        const reward = (appSettings.adReward * currentLevel.multiplier);
-        creditAdRewardToFirebase(reward);
-      }
-    }
-
-    function creditAdRewardToFirebase(amount) {
-      const userRef = db.ref(`users/${currentUser.id}`);
-      userRef.child('balance').transaction(b => (b || 0) + amount);
-      userRef.child('taskEarnings').transaction(t => (t || 0) + amount);
-      userRef.child('totalAdsWatched').transaction(w => (w || 0) + 1);
-      userRef.child('dailyAdsWatchedToday').transaction(d => (d || 0) + 1);
-
-      playSound('coin');
-      triggerHaptic('success');
-      confetti({ particleCount: 60, spread: 60 });
-      showToast(`বিজ্ঞাপন সম্পন্ন! +৳${amount.toFixed(2)} Firebase-এ যুক্ত হয়েছে`);
-    }
-
-    function handleTaskClick(taskId) {
-      const task = allTasks.find(t => t.id === taskId);
-      if (!task) return;
-
-      const { currentLevel } = getUserLevel();
-      const reward = task.baseReward * currentLevel.multiplier;
-
-      window.open(task.link, '_blank');
-      showToast('টাস্ক যাচাই হচ্ছে... ৩ সেকেন্ড অপেক্ষা করুন', '⏳');
-
-      setTimeout(() => {
-        const completed = currentUser.completedTasks || [];
-        if (!completed.includes(taskId)) {
-          const userRef = db.ref(`users/${currentUser.id}`);
-          userRef.child('completedTasks').set([...completed, taskId]);
-          userRef.child('balance').transaction(b => (b || 0) + reward);
-          userRef.child('taskEarnings').transaction(t => (t || 0) + reward);
-
-          playSound('coin');
-          triggerHaptic('success');
-          confetti({ particleCount: 70, spread: 70 });
-          showToast(`টাস্ক সম্পন্ন! +৳${reward.toFixed(2)} যোগ হয়েছে`);
-        }
-      }, 3000);
-    }
-
-    function claimDailyReward() {
-      const today = new Date().toISOString().slice(0, 10);
-      if (currentUser.lastDailyClaimDate === today) {
-        showToast('আজকের দৈনিক বোনাস ইতিমধ্যে গ্রহণ করেছেন!', '⚠️');
-        return;
-      }
-
-      const { currentLevel } = getUserLevel();
-      const bonus = 10.00 * currentLevel.multiplier;
-
-      const userRef = db.ref(`users/${currentUser.id}`);
-      userRef.child('balance').transaction(b => (b || 0) + bonus);
-      userRef.child('lastDailyClaimDate').set(today);
-
-      playSound('coin');
-      triggerHaptic('success');
-      confetti({ particleCount: 80, spread: 80 });
-      showToast(`দৈনিক বোনাস +৳${bonus.toFixed(2)} সংগ্রহ হয়েছে!`);
-    }
-
-    function handleWithdrawSubmit(e) {
-      e.preventDefault();
-      const method = document.querySelector('input[name="withdrawMethod"]:checked').value;
-      const account = document.getElementById('withdrawAccount').value.trim();
-      const amount = parseFloat(document.getElementById('withdrawAmount').value);
-      const myRefsCount = Object.keys(currentUser.referrals || {}).length;
-
-      if (!/^01[3-9]\d{8}$/.test(account)) {
-        showToast('সঠিক ১১ ডিজিটের বাংলাদেশী নাম্বার দিন (01XXXXXXXXX)', '⚠️');
-        return;
-      }
-
-      if (amount < appSettings.minWithdraw) {
-        showToast(`সর্বনিম্ন উত্তোলন সীমা ৳${appSettings.minWithdraw}`, '⚠️');
-        return;
-      }
-
-      if (myRefsCount < appSettings.minReferralsForWithdraw) {
-        showToast(`উত্তোলনের জন্য কমপক্ষে ${appSettings.minReferralsForWithdraw}টি সফল রেফারেল প্রয়োজন!`, '⚠️');
-        return;
-      }
-
-      if (amount > (currentUser.balance || 0)) {
-        showToast('আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই!', '⚠️');
-        return;
-      }
-
-      // Atomically decrement balance and record withdrawal in Firebase
-      const userRef = db.ref(`users/${currentUser.id}`);
-      userRef.child('balance').transaction(b => (b || 0) - amount);
-
-      const wdRef = db.ref('withdrawals').push();
-      wdRef.set({
-        userId: currentUser.id,
-        userName: currentUser.name,
-        method: method,
-        account: account,
-        amount: amount,
-        status: 'pending',
-        timestamp: firebase.database.ServerValue.TIMESTAMP
-      });
-
-      playSound('coin');
-      triggerHaptic('success');
-      document.getElementById('withdrawForm').reset();
-      showToast('উইথড্র রিকোয়েস্ট সরাসরি Firebase-এ জমা হয়েছে! ⏳');
-    }
-
-    /* -------------------------------------------------------------
-       8. SUPER ADMIN PANEL LOGIC (Telegram ID: 8422485324)
-    ------------------------------------------------------------- */
-    function openAdminPanel() {
-      if (String(currentUser.id) !== SUPER_ADMIN_ID) {
-        showToast('অননুমোদিত অ্যাক্সেস! শুধুমাত্র আইডি 8422485324 অনুমোদিত।', '❌');
-        return;
-      }
-
-      document.getElementById('adminAdMode').value = appSettings.adMode;
-      document.getElementById('adminAdsgramBlockId').value = appSettings.adBlockId;
-      document.getElementById('adminAdReward').value = appSettings.adReward;
-      document.getElementById('adminReferReward').value = appSettings.referReward;
-      document.getElementById('adminDailyAdLimit').value = appSettings.dailyAdLimit;
-      document.getElementById('adminMinWithdraw').value = appSettings.minWithdraw;
-
-      renderAdminPendingWithdrawals();
-      openModal('adminModal');
-    }
-
-    function saveAdminSettingsToFirebase() {
-      if (String(currentUser.id) !== SUPER_ADMIN_ID) return;
-
-      const updated = {
-        adMode: document.getElementById('adminAdMode').value,
-        adBlockId: document.getElementById('adminAdsgramBlockId').value,
-        adReward: parseFloat(document.getElementById('adminAdReward').value) || 10,
-        referReward: parseFloat(document.getElementById('adminReferReward').value) || 50,
-        dailyAdLimit: parseInt(document.getElementById('adminDailyAdLimit').value) || 10,
-        minWithdraw: parseFloat(document.getElementById('adminMinWithdraw').value) || 1020,
-        minReferralsForWithdraw: 10,
-        botUsername: appSettings.botUsername || "taskpaybd2bot"
-      };
-
-      db.ref('settings').update(updated);
-      showToast('Firebase কনফিগারেশন আপডেট হয়েছে! 💾');
-    }
-
-    function renderAdminPendingWithdrawals() {
-      const container = document.getElementById('adminPendingWithdrawList');
-      const pending = allWithdrawalsAdmin.filter(w => w.status === 'pending');
-      document.getElementById('adminPendingCountBadge').textContent = `${pending.length} Pending`;
-
-      if (pending.length === 0) {
-        container.innerHTML = '<p class="text-zinc-500 text-center py-1">কোনো পেন্ডিং উইথড্র রিকোয়েস্ট নেই</p>';
+      if (type === 'success') {
+        toastIcon.className = "fa-solid fa-circle-check text-brand-500 text-lg";
+      } else if (type === 'error') {
+        toastIcon.className = "fa-solid fa-circle-exclamation text-rose-500 text-lg";
       } else {
-        container.innerHTML = pending.map(w => `
-          <div class="flex items-center justify-between p-2.5 rounded-xl bg-zinc-800 border border-zinc-700">
-            <div>
-              <p class="font-bold text-white text-xs">${w.userName} (${w.method})</p>
-              <p class="text-[10px] text-zinc-400 font-mono">${w.account} • ৳${w.amount.toFixed(2)}</p>
-            </div>
-            <div class="flex gap-1.5">
-              <button onclick="adminApproveWithdraw('${w.id}')" class="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold px-2.5 py-1 rounded-lg text-xs">
-                অনুমোদন ✓
-              </button>
-            </div>
-          </div>
-        `).join('');
+        toastIcon.className = "fa-solid fa-circle-info text-sky-400 text-lg";
       }
-    }
 
-    function adminApproveWithdraw(withdrawId) {
-      if (String(currentUser.id) !== SUPER_ADMIN_ID) return;
-      db.ref(`withdrawals/${withdrawId}`).update({ status: 'approved' });
-      triggerHaptic('success');
-      showToast('উইথড্রয়াল সফলভাবে অনুমোদন করা হয়েছে! ✅');
-    }
-
-    function adminAdjustUserBalance(amount) {
-      if (String(currentUser.id) !== SUPER_ADMIN_ID) return;
-      db.ref(`users/${currentUser.id}/balance`).transaction(b => (b || 0) + amount);
-      triggerHaptic('success');
-      showToast(`ব্যালেন্সে +৳${amount} টেস্ট ফান্ড যোগ করা হয়েছে`);
-    }
-
-    /* -------------------------------------------------------------
-       9. MODAL & TOAST UTILITIES
-    ------------------------------------------------------------- */
-    function openModal(id) {
-      playSound('click');
-      document.getElementById(id).classList.remove('hidden');
-    }
-
-    function closeModal(id) {
-      playSound('click');
-      document.getElementById(id).classList.add('hidden');
-    }
-
-    let toastTimeout = null;
-    function showToast(msg, icon = '✅') {
-      const t = document.getElementById('toast');
-      document.getElementById('toastMessage').textContent = msg;
-      document.getElementById('toastIcon').textContent = icon;
-      t.classList.remove('-translate-y-20', 'opacity-0');
-      t.classList.add('translate-y-0', 'opacity-100');
+      toast.classList.remove('-translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
 
       clearTimeout(toastTimeout);
       toastTimeout = setTimeout(() => {
-        t.classList.remove('translate-y-0', 'opacity-100');
-        t.classList.add('-translate-y-20', 'opacity-0');
-      }, 2800);
+        toast.classList.add('-translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 3000);
     }
 
-    // Initialize application on load
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Run on startup
     window.addEventListener('DOMContentLoaded', () => {
-      initTelegramAndAuth();
+      initUserContext();
     });
   </script>
 </body>
-            </html>
+          </html>
