@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="bn" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Bangla Task Hub - Earn & Admin</title>
+  <meta name="description" content="Telegram Mini App for task earnings, daily rewarded video ads, referrals, bKash & Nagad cashouts, with an integrated Super Admin control panel." />
+  <meta name="theme-color" content="#09090b" />
+  
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Adsgram SDK for Telegram Rewarded Ads -->
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+            },
+            surface: {
+              card: '#121217',
+              border: '#27272a',
+              input: '#18181b',
+              muted: '#71717a'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', 'Hind Siliguri', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #09090b;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #27272a;
+      border-radius: 4px;
+    }
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.92; transform: scale(1.02); }
+    }
+    .animate-pulse-subtle {
+      animation: pulse-subtle 3s infinite ease-in-out;
+    }
+    .safe-bottom {
+      padding-bottom: env(safe-area-inset-bottom, 16px);
+    }
+  </style>
+</head>
+<body class="bg-[#09090b] text-slate-100 min-h-screen antialiased select-none flex flex-col items-center">
+
+  <!-- Main Mobile App Shell -->
+  <div class="w-full max-w-md min-h-screen bg-[#09090b] flex flex-col relative pb-24 shadow-2xl border-x border-zinc-800/60">
+
+    <!-- Top Sticky Header -->
+    <header class="sticky top-0 z-40 bg-[#09090b]/90 backdrop-blur-md border-b border-zinc-800/80 px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="relative">
+          <div id="userAvatar" class="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 p-[2px] shadow-sm">
+            <div class="w-full h-full bg-zinc-900 rounded-full flex items-center justify-center font-bold text-emerald-400 text-sm overflow-hidden">
+              <span id="userAvatarInitial">U</span>
+            </div>
+          </div>
+          <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#09090b] rounded-full"></span>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span id="headerUserName" class="text-sm font-bold text-white tracking-wide truncate max-w-[120px]">User</span>
+            <button onclick="openModal('levelModal')" id="headerLevelPill" class="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-0.5 hover:bg-amber-500/30 transition-all">
+              <span>🥉 Lvl 1</span>
+            </button>
+          </div>
+          <p id="telegramHandleText" class="text-[11px] text-zinc-400">@telegram_user</p>
+        </div>
+      </div>
+
+      <!-- Action Badges (Trophy / Sound / Balance) -->
+      <div class="flex items-center gap-2">
+        <button onclick="openModal('leaderboardModal')" title="Leaderboard" class="w-8 h-8 rounded-full bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-700 flex items-center justify-center text-amber-400 active:scale-95 transition-all shadow-sm">
+          🏆
+        </button>
+        <button onclick="toggleSound()" id="soundToggleBtn" title="Toggle Sound" class="w-8 h-8 rounded-full bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-700 flex items-center justify-center text-zinc-300 active:scale-95 transition-all text-xs">
+          🔊
+        </button>
+        <div class="bg-gradient-to-r from-emerald-500/15 to-teal-500/15 border border-emerald-500/30 rounded-xl px-2.5 py-1 flex items-center gap-1.5 shadow-sm">
+          <span class="text-emerald-400 font-bold text-xs">৳</span>
+          <span id="headerBalance" class="font-extrabold text-sm text-emerald-400">0.00</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Simulated TG Environment Notification Banner (Only shows if outside real Telegram) -->
+    <div id="tgNoticeBanner" class="hidden bg-indigo-950/60 border-b border-indigo-800/50 px-4 py-2 text-xs text-indigo-300 flex items-center justify-between">
+      <span>ℹ️ Running in Browser Demo Mode (Telegram WebApp simulated)</span>
+      <button onclick="document.getElementById('tgNoticeBanner').remove()" class="text-indigo-400 hover:text-white font-bold ml-2">✕</button>
+    </div>
+
+    <!-- TAB 1: HOME TAB -->
+    <main id="tab-home" class="tab-content flex-1 p-4 space-y-4">
+      <!-- Balance Card -->
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-emerald-950/40 border border-emerald-500/20 p-5 shadow-lg">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs uppercase tracking-wider text-zinc-400 font-semibold">মোট ব্যালেন্স / Total Balance</p>
+            <div class="flex items-baseline gap-1 mt-1">
+              <span class="text-3xl font-black text-white">৳</span>
+              <span id="homeMainBalance" class="text-4xl font-extrabold text-white tracking-tight">0.00</span>
+            </div>
+          </div>
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> একটিভ / Active
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-zinc-800/80">
+          <div class="bg-zinc-800/40 rounded-xl p-2.5">
+            <p class="text-[11px] text-zinc-400">টাস্ক ইনকাম</p>
+            <p id="homeTaskEarnings" class="text-sm font-bold text-white mt-0.5">৳0.00</p>
+          </div>
+          <div class="bg-zinc-800/40 rounded-xl p-2.5">
+            <p class="text-[11px] text-zinc-400">রেফারেল বোনাস</p>
+            <p id="homeReferralEarnings" class="text-sm font-bold text-white mt-0.5">৳0.00</p>
+          </div>
+        </div>
+
+        <div class="flex gap-2 mt-4">
+          <button onclick="switchTab('earn')" class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-98 transition-all">
+            ⚡ কাজ শুরু করুন
+          </button>
+          <button onclick="switchTab('withdraw')" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-zinc-700 active:scale-98 transition-all">
+            💳 টাকা তুলুন
+          </button>
+        </div>
+      </div>
+
+      <!-- User Level Card -->
+      <div onclick="openModal('levelModal')" class="cursor-pointer rounded-2xl bg-zinc-900/90 border border-amber-500/30 p-4 hover:border-amber-500/60 transition-all shadow-md relative overflow-hidden group">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div id="homeLevelBadgeIcon" class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-xl shadow-inner">
+              🥉
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <h4 id="homeLevelTierName" class="font-bold text-sm text-white">ব্রোঞ্জ স্টার্টার (Level 1)</h4>
+                <span id="homeLevelMultiplierBadge" class="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">1.0x</span>
+              </div>
+              <p id="homeLevelHint" class="text-[11px] text-zinc-400 mt-0.5">পরবর্তী টায়ারে উন্নীত হয়ে আয় দ্বিগুণ করুন</p>
+            </div>
+          </div>
+          <span class="text-zinc-400 text-xs group-hover:translate-x-0.5 transition-transform">➔</span>
+        </div>
+
+        <!-- Level Progress Bar -->
+        <div class="mt-3">
+          <div class="flex justify-between text-[11px] text-zinc-400 mb-1">
+            <span id="homeLevelProgressText">লেভেল অগ্রগতি</span>
+            <span id="homeLevelPercentText">0%</span>
+          </div>
+          <div class="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+            <div id="homeLevelProgressBar" class="h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full transition-all duration-500" style="width: 15%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leaderboard Ranking Shortcut Card -->
+      <div onclick="openModal('leaderboardModal')" class="cursor-pointer rounded-2xl bg-gradient-to-r from-indigo-950/60 to-purple-950/60 border border-indigo-500/30 p-3.5 hover:border-indigo-400 transition-all flex items-center justify-between shadow-md">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-lg">
+            🏆
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-bold text-white">টপ ১০ লিডারবোর্ড</span>
+              <span id="homeRankPill" class="text-[10px] bg-indigo-500/30 text-indigo-300 border border-indigo-400/30 px-1.5 py-0.2 rounded font-bold">র‍্যাংক #1</span>
+            </div>
+            <p id="homeRankOvertakeText" class="text-[11px] text-indigo-200/70">রেফার করে সেরা ১০-এ স্থান পান এবং বোনাস জিতুন</p>
+          </div>
+        </div>
+        <span class="text-indigo-400 text-xs">দেখুন ➔</span>
+      </div>
+
+      <!-- Daily Streak Bonus -->
+      <div class="rounded-2xl bg-zinc-900/90 border border-zinc-800 p-4">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-amber-400 text-base">🔥</span>
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider">দৈনিক চেক-ইন বোনাস / Daily Streak</h4>
+          </div>
+          <span id="dailyBonusStatusText" class="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">উপলব্ধ</span>
+        </div>
+        <div class="flex items-center justify-between gap-1.5">
+          <div class="flex-1 bg-zinc-800/60 border border-zinc-700/60 rounded-xl p-2 text-center">
+            <span class="text-[10px] text-zinc-400 block">দিন ১</span>
+            <span class="text-xs font-extrabold text-amber-400 block">৳১.০০</span>
+          </div>
+          <div class="flex-1 bg-zinc-800/60 border border-zinc-700/60 rounded-xl p-2 text-center">
+            <span class="text-[10px] text-zinc-400 block">দিন ২</span>
+            <span class="text-xs font-extrabold text-amber-400 block">৳২.০০</span>
+          </div>
+          <div class="flex-1 bg-zinc-800/60 border border-zinc-700/60 rounded-xl p-2 text-center">
+            <span class="text-[10px] text-zinc-400 block">দিন ৩</span>
+            <span class="text-xs font-extrabold text-amber-400 block">৳৩.০০</span>
+          </div>
+          <div class="flex-1 bg-gradient-to-b from-amber-500/20 to-zinc-800/80 border border-amber-500/40 rounded-xl p-2 text-center">
+            <span class="text-[10px] text-amber-300 block font-bold">দিন ৭</span>
+            <span class="text-xs font-black text-amber-300 block">৳১০.০০</span>
+          </div>
+        </div>
+        <button id="claimDailyBtn" onclick="claimDailyReward()" class="w-full mt-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-black py-2 rounded-xl text-xs shadow-md transition-all active:scale-98">
+          🎁 দৈনিক বোনাস সংগ্রহ করুন (+৳২.০০)
+        </button>
+      </div>
+
+      <!-- Quick Recent Activity -->
+      <div class="rounded-2xl bg-zinc-900/90 border border-zinc-800 p-4">
+        <h4 class="text-xs font-bold text-zinc-300 uppercase tracking-wider mb-2.5">সাম্প্রতিক লেনদেন / Recent History</h4>
+        <div id="homeRecentTxList" class="space-y-2 text-xs">
+          <p class="text-zinc-500 text-center py-2">কোনো সাম্প্রতিক রেকর্ড নেই</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- TAB 2: EARN TAB -->
+    <main id="tab-earn" class="tab-content hidden flex-1 p-4 space-y-4">
+      <!-- Rewarded Ad Card -->
+      <div class="rounded-2xl bg-gradient-to-br from-indigo-950/70 via-zinc-900 to-zinc-900 border border-indigo-500/30 p-5 shadow-lg relative overflow-hidden">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <span class="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">স্পনসরড ভিডিও অ্যাড</span>
+            <h3 class="text-base font-extrabold text-white mt-1">ভিডিও দেখুন এবং আয় করুন</h3>
+            <p class="text-xs text-zinc-400 mt-0.5">প্রতিটি ১৫ সেকেন্ডের বিজ্ঞাপনে নিশ্চিত ক্যাশব্যাক</p>
+          </div>
+          <div class="text-right">
+            <span id="earnAdRewardAmountText" class="text-lg font-black text-emerald-400 block">+৳১.০০</span>
+            <span id="earnAdMultiplierTag" class="text-[9px] text-amber-300 bg-amber-500/20 px-1 rounded font-bold">1.0x Boosted</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs text-zinc-400 my-3 bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800">
+          <span>দৈনিক বাকি বিজ্ঞাপন:</span>
+          <span id="dailyAdCounterText" class="font-bold text-white">২০ / ২০</span>
+        </div>
+
+        <button onclick="watchRewardedAd()" id="watchAdBtn" class="w-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 active:scale-98 transition-all">
+          <span>▶️</span> বিজ্ঞাপন দেখুন (Watch Video Ad)
+        </button>
+      </div>
+
+      <!-- Task Center Header -->
+      <div class="flex items-center justify-between pt-2">
+        <h3 class="text-sm font-extrabold text-white flex items-center gap-1.5">
+          <span>📋</span> মাইক্রো টাস্ক লিস্ট / Available Tasks
+        </h3>
+        <span id="tasksRemainingBadge" class="text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full font-bold">৪টি কাজ বাকি</span>
+      </div>
+
+      <!-- Tasks List Container -->
+      <div id="tasksContainer" class="space-y-3">
+        <!-- Rendered by JS -->
+      </div>
+    </main>
+
+    <!-- TAB 3: REFER TAB -->
+    <main id="tab-refer" class="tab-content hidden flex-1 p-4 space-y-4">
+      <div class="rounded-2xl bg-gradient-to-br from-purple-950/60 via-zinc-900 to-zinc-900 border border-purple-500/30 p-5 shadow-lg text-center relative">
+        <div class="w-14 h-14 rounded-2xl bg-purple-500/20 border border-purple-500/40 mx-auto flex items-center justify-center text-2xl shadow-inner mb-3">
+          🤝
+        </div>
+        <h3 class="text-lg font-black text-white">বন্ধুদের আমন্ত্রণ জানান</h3>
+        <p class="text-xs text-zinc-300 mt-1 max-w-xs mx-auto">
+          প্রতিটি সফল রেফারে পাবেন <strong class="text-emerald-400 font-extrabold">৳১৫.০০</strong> তাৎক্ষণিক বোনাস এবং তাদের প্রতি আয়ের <strong class="text-purple-300 font-extrabold">১০% লাইফটাইম কমিশন</strong>!
+        </p>
+
+        <!-- Referral Code Box -->
+        <div class="mt-4 bg-zinc-950 border border-zinc-800 rounded-xl p-3 flex items-center justify-between">
+          <div class="text-left">
+            <span class="text-[10px] text-zinc-400 block uppercase font-bold">আপনার রেফারেল কোড</span>
+            <span id="myReferralCode" class="text-base font-black text-emerald-400 tracking-wider">BTH8823</span>
+          </div>
+          <button onclick="copyReferralCode()" class="bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-zinc-700 active:scale-95 transition-all">
+            📋 কপি
+          </button>
+        </div>
+
+        <div class="flex gap-2 mt-3">
+          <button onclick="shareOnTelegram()" class="flex-1 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-extrabold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-98 transition-all">
+            ✈️ টেলিগ্রামে শেয়ার করুন
+          </button>
+          <button onclick="simulateFriendJoin()" class="bg-zinc-800 hover:bg-zinc-700 text-amber-300 font-bold px-3 py-2.5 rounded-xl text-xs border border-zinc-700 active:scale-98 transition-all" title="Test Demo Referral">
+            + টেস্ট রেফার
+          </button>
+        </div>
+      </div>
+
+      <!-- Referral Leaderboard Callout -->
+      <div onclick="openModal('leaderboardModal')" class="cursor-pointer rounded-2xl bg-zinc-900 border border-zinc-800 p-4 flex items-center justify-between hover:border-zinc-700 transition-all">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">🏆</span>
+          <div>
+            <h4 class="text-xs font-bold text-white">রেফারেল লিডারবোর্ড র‍্যাঙ্কিং</h4>
+            <p id="referRankStatusText" class="text-[11px] text-zinc-400">আপনার বর্তমান র‍্যাংক: #1 (0 রেফারেল)</p>
+          </div>
+        </div>
+        <span class="text-xs text-emerald-400 font-bold">র‍্যাংক দেখুন ➔</span>
+      </div>
+
+      <!-- Referral Stats Cards -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center">
+          <span class="text-xs text-zinc-400 block font-semibold">মোট রেফার সংখ্যা</span>
+          <span id="referTotalCount" class="text-2xl font-black text-white mt-1 block">০</span>
+        </div>
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center">
+          <span class="text-xs text-zinc-400 block font-semibold">মোট রেফার আয়</span>
+          <span id="referTotalIncome" class="text-2xl font-black text-emerald-400 mt-1 block">৳০.০০</span>
+        </div>
+      </div>
+
+      <!-- Reffered Friends List -->
+      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+        <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3">আমন্ত্রিত বন্ধুরা / Joined Friends</h4>
+        <div id="referredFriendsList" class="space-y-2 text-xs">
+          <p class="text-zinc-500 text-center py-2">এখনো কোনো বন্ধু যোগ দেয়নি</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- TAB 4: WITHDRAW TAB -->
+    <main id="tab-withdraw" class="tab-content hidden flex-1 p-4 space-y-4">
+      <div class="rounded-2xl bg-gradient-to-br from-emerald-950/50 via-zinc-900 to-zinc-900 border border-emerald-500/30 p-5 shadow-lg">
+        <h3 class="text-base font-extrabold text-white">উত্তোলন অনুরোধ / Cashout Request</h3>
+        <p class="text-xs text-zinc-400 mt-0.5">বিকাশ, নগদ বা রকেটের মাধ্যমে টাকা তুলুন (মিনিমাম ৳৫০)</p>
+
+        <form id="withdrawForm" onsubmit="handleWithdrawSubmit(event)" class="mt-4 space-y-3.5">
+          <!-- Method Selection -->
+          <div>
+            <label class="block text-xs font-bold text-zinc-300 mb-1.5">পেমেন্ট মেথড নির্বাচন করুন</label>
+            <div class="grid grid-cols-3 gap-2">
+              <label class="cursor-pointer border border-zinc-700 has-[:checked]:border-pink-500 has-[:checked]:bg-pink-950/40 rounded-xl p-2.5 text-center flex flex-col items-center gap-1 transition-all">
+                <input type="radio" name="withdrawMethod" value="bKash" checked class="hidden" />
+                <span class="text-sm font-black text-pink-400">bKash</span>
+                <span class="text-[10px] text-zinc-400">বিকাশ</span>
+              </label>
+              <label class="cursor-pointer border border-zinc-700 has-[:checked]:border-orange-500 has-[:checked]:bg-orange-950/40 rounded-xl p-2.5 text-center flex flex-col items-center gap-1 transition-all">
+                <input type="radio" name="withdrawMethod" value="Nagad" class="hidden" />
+                <span class="text-sm font-black text-orange-400">Nagad</span>
+                <span class="text-[10px] text-zinc-400">নগদ</span>
+              </label>
+              <label class="cursor-pointer border border-zinc-700 has-[:checked]:border-purple-500 has-[:checked]:bg-purple-950/40 rounded-xl p-2.5 text-center flex flex-col items-center gap-1 transition-all">
+                <input type="radio" name="withdrawMethod" value="Rocket" class="hidden" />
+                <span class="text-sm font-black text-purple-400">Rocket</span>
+                <span class="text-[10px] text-zinc-400">রকেট</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Account Number -->
+          <div>
+            <label class="block text-xs font-bold text-zinc-300 mb-1">অ্যাকাউন্ট নাম্বার (১১ ডিজিট)</label>
+            <input type="tel" id="withdrawAccount" required placeholder="017xxxxxxxx" maxlength="11" class="w-full bg-zinc-950 border border-zinc-700 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors" />
+          </div>
+
+          <!-- Amount -->
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <label class="font-bold text-zinc-300">উত্তোলনের পরিমাণ (৳)</label>
+              <span class="text-zinc-400">ব্যালেন্স: <strong id="withdrawAvailBalanceText" class="text-emerald-400">৳0.00</strong></span>
+            </div>
+            <input type="number" id="withdrawAmount" required min="50" step="1" placeholder="সর্বনিম্ন ৳৫০" class="w-full bg-zinc-950 border border-zinc-700 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors" />
+          </div>
+
+          <button type="submit" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-extrabold py-3 rounded-xl text-sm shadow-md active:scale-98 transition-all">
+            উত্তোলন কনফার্ম করুন (Submit Cashout)
+          </button>
+        </form>
+      </div>
+
+      <!-- Withdrawal History -->
+      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+        <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3">উত্তোলন হিস্টোরি / Cashout History</h4>
+        <div id="withdrawHistoryList" class="space-y-2 text-xs">
+          <p class="text-zinc-500 text-center py-2">কোনো উত্তোলনের রেকর্ড নেই</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- TAB 5: PROFILE TAB -->
+    <main id="tab-profile" class="tab-content hidden flex-1 p-4 space-y-4">
+      <!-- Profile Header Card -->
+      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-center relative">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 p-1 mx-auto shadow-md">
+          <div class="w-full h-full bg-zinc-950 rounded-full flex items-center justify-center font-black text-emerald-400 text-xl">
+            <span id="profileAvatarInitial">U</span>
+          </div>
+        </div>
+        <h3 id="profileFullName" class="font-extrabold text-base text-white mt-2">User Profile</h3>
+        <p id="profileTelegramId" class="text-xs text-zinc-400">ID: 882391024</p>
+
+        <!-- Rank & Tier Badges -->
+        <div class="flex items-center justify-center gap-2 mt-3">
+          <button onclick="openModal('levelModal')" id="profileTierBadge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+            <span>🥉 Level 1 (1.0x)</span>
+          </button>
+          <button onclick="openModal('leaderboardModal')" id="profileRankBadge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-1">
+            <span>🏆 Rank #1</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="grid grid-cols-3 gap-2">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
+          <span class="text-[10px] text-zinc-400 block font-semibold">টাস্ক সম্পন্ন</span>
+          <span id="profileCompletedTasksCount" class="text-base font-bold text-white mt-0.5 block">0</span>
+        </div>
+        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
+          <span class="text-[10px] text-zinc-400 block font-semibold">মোট অ্যাড দেখা</span>
+          <span id="profileTotalAdsWatched" class="text-base font-bold text-white mt-0.5 block">0</span>
+        </div>
+        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
+          <span class="text-[10px] text-zinc-400 block font-semibold">মোট উইথড্র</span>
+          <span id="profileTotalCashout" class="text-base font-bold text-emerald-400 mt-0.5 block">৳0.00</span>
+        </div>
+      </div>
+
+      <!-- Profile Options -->
+      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden divide-y divide-zinc-800/80 text-xs font-semibold">
+        <button onclick="openModal('levelModal')" class="w-full px-4 py-3 text-left text-zinc-200 hover:bg-zinc-800 flex items-center justify-between">
+          <span class="flex items-center gap-2"><span>⭐</span> লেভেল এবং রিওয়ার্ড বুস্টার</span>
+          <span class="text-zinc-500">➔</span>
+        </button>
+        <button onclick="openModal('leaderboardModal')" class="w-full px-4 py-3 text-left text-zinc-200 hover:bg-zinc-800 flex items-center justify-between">
+          <span class="flex items-center gap-2"><span>🏆</span> টপ ১০ লিডারবোর্ড</span>
+          <span class="text-zinc-500">➔</span>
+        </button>
+        <button onclick="openAdminPanelAuth()" class="w-full px-4 py-3 text-left text-amber-300 hover:bg-zinc-800 flex items-center justify-between">
+          <span class="flex items-center gap-2"><span>⚙️</span> সুপার অ্যাডমিন প্যানেল (Super Admin)</span>
+          <span class="text-zinc-500">➔</span>
+        </button>
+        <button onclick="resetUserDataPrompt()" class="w-full px-4 py-3 text-left text-red-400 hover:bg-zinc-800 flex items-center justify-between">
+          <span class="flex items-center gap-2"><span>🗑️</span> অ্যাপ ডেটা রিসেট (Reset Test Data)</span>
+          <span class="text-zinc-500">➔</span>
+        </button>
+      </div>
+
+      <!-- App Info Footer -->
+      <div class="text-center text-[11px] text-zinc-500 pt-2 space-y-0.5">
+        <p>Bangla Task Hub v2.5.0 • Telegram Mini App</p>
+        <p>Verified Secure • Adsgram Certified • bKash/Nagad Ready</p>
+      </div>
+    </main>
+
+    <!-- BOTTOM NAVIGATION BAR -->
+    <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40 bg-[#09090b]/95 backdrop-blur-lg border-t border-zinc-800 px-2 py-2 flex items-center justify-around safe-bottom">
+      <button onclick="switchTab('home')" id="nav-btn-home" class="nav-button flex flex-col items-center gap-1 text-emerald-400 font-bold transition-colors py-1 px-3">
+        <span class="text-lg">🏠</span>
+        <span class="text-[10px]">হোম</span>
+      </button>
+      <button onclick="switchTab('earn')" id="nav-btn-earn" class="nav-button flex flex-col items-center gap-1 text-zinc-400 font-medium transition-colors py-1 px-3">
+        <span class="text-lg">⚡</span>
+        <span class="text-[10px]">টাস্ক</span>
+      </button>
+      <button onclick="switchTab('refer')" id="nav-btn-refer" class="nav-button flex flex-col items-center gap-1 text-zinc-400 font-medium transition-colors py-1 px-3">
+        <span class="text-lg">👥</span>
+        <span class="text-[10px]">রেফার</span>
+      </button>
+      <button onclick="switchTab('withdraw')" id="nav-btn-withdraw" class="nav-button flex flex-col items-center gap-1 text-zinc-400 font-medium transition-colors py-1 px-3">
+        <span class="text-lg">💳</span>
+        <span class="text-[10px]">উত্তোলন</span>
+      </button>
+      <button onclick="switchTab('profile')" id="nav-btn-profile" class="nav-button flex flex-col items-center gap-1 text-zinc-400 font-medium transition-colors py-1 px-3">
+        <span class="text-lg">👤</span>
+        <span class="text-[10px]">প্রোফাইল</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- 1. VIDEO AD SIMULATION / PLAYER MODAL -->
+  <div id="adModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="w-full max-w-sm bg-zinc-950 border border-zinc-800 rounded-3xl p-5 shadow-2xl flex flex-col items-center text-center relative">
+      <div class="w-full flex items-center justify-between text-xs text-zinc-400 pb-3 border-b border-zinc-800">
+        <span class="flex items-center gap-1 text-amber-400 font-bold">
+          <span>📢</span> স্পনসরড ভিডিও বিজ্ঞাপন
+        </span>
+        <span id="adCountdownBadge" class="bg-zinc-800 px-2.5 py-0.5 rounded-full font-mono font-bold text-white">15s</span>
+      </div>
+
+      <!-- Animated Video Placeholder Frame -->
+      <div class="w-full aspect-video bg-gradient-to-tr from-zinc-900 via-indigo-950/60 to-zinc-900 rounded-2xl border border-zinc-800 my-4 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        <div class="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-xl animate-pulse">
+          ▶️
+        </div>
+        <p class="text-xs font-bold text-white mt-2">Daraz 11.11 Mega Deals</p>
+        <p class="text-[11px] text-zinc-400">সেরা ডিসকাউন্টে কেনাকাটা করুন</p>
+        
+        <!-- Video progress bar at bottom of frame -->
+        <div class="absolute bottom-0 left-0 right-0 h-1 bg-zinc-800">
+          <div id="adVideoProgressBar" class="h-full bg-emerald-400 w-0 transition-all duration-1000 linear"></div>
+        </div>
+      </div>
+
+      <p class="text-xs text-zinc-400 mb-4">
+        পুরো বিজ্ঞাপনটি দেখুন। শেষ হলে <strong class="text-emerald-400" id="adModalRewardText">+৳১.১৫</strong> ব্যালেন্সে যুক্ত হবে!
+      </p>
+
+      <button id="adCloseBtn" disabled onclick="closeAdModal(true)" class="w-full bg-zinc-800 text-zinc-500 font-bold py-2.5 rounded-xl text-xs transition-all cursor-not-allowed">
+        বিজ্ঞাপন সমাপ্তির জন্য অপেক্ষা করুন... (15)
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. USER LEVEL & MULTIPLIER ROADMAP MODAL -->
+  <div id="levelModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="w-full max-w-sm max-h-[88vh] bg-zinc-950 border border-zinc-800 rounded-3xl p-5 shadow-2xl flex flex-col relative overflow-hidden">
+      <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">⭐</span>
+          <div>
+            <h3 class="font-extrabold text-sm text-white">লেভেল এবং রিওয়ার্ড বুস্টার</h3>
+            <p class="text-[11px] text-zinc-400">প্রতিটি লেভেলে আয়ের মাল্টিপ্লায়ার বৃদ্ধি পায়</p>
+          </div>
+        </div>
+        <button onclick="closeModal('levelModal')" class="w-8 h-8 rounded-full bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center">✕</button>
+      </div>
+
+      <!-- Levels Roadmap List -->
+      <div class="overflow-y-auto custom-scrollbar flex-1 py-3 space-y-3">
+        <!-- Level 1: Bronze -->
+        <div class="p-3 rounded-2xl bg-zinc-900 border border-zinc-700/80">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-amber-300">🥉 Lvl 1: ব্রোঞ্জ স্টার্টার</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-bold">1.0x (বেসিক)</span>
+          </div>
+          <p class="text-[11px] text-zinc-400 mt-1">শুরু থেকেই সক্রিয়। সাধারণ রেটে আয়।</p>
+        </div>
+
+        <!-- Level 2: Silver -->
+        <div class="p-3 rounded-2xl bg-zinc-900 border border-zinc-700/80">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-200">🥈 Lvl 2: সিলভার আর্নার</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 font-bold border border-slate-600">1.15x (+15%)</span>
+          </div>
+          <p class="text-[11px] text-zinc-400 mt-1">শর্ত: ২টি টাস্ক এবং ২টি রেফারেল সম্পন্ন করুন।</p>
+        </div>
+
+        <!-- Level 3: Gold -->
+        <div class="p-3 rounded-2xl bg-zinc-900 border border-amber-500/30">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-amber-400">🥇 Lvl 3: গোল্ড মাস্টার</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">1.30x (+30%)</span>
+          </div>
+          <p class="text-[11px] text-zinc-400 mt-1">শর্ত: ৪টি টাস্ক এবং ৫টি রেফারেল সম্পন্ন করুন।</p>
+        </div>
+
+        <!-- Level 4: Platinum -->
+        <div class="p-3 rounded-2xl bg-zinc-900 border border-cyan-500/30">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-cyan-400">💎 Lvl 4: প্লাটিনাম ভিআইপি</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30">1.60x (+60%)</span>
+          </div>
+          <p class="text-[11px] text-zinc-400 mt-1">শর্ত: ৫টি টাস্ক এবং ১০টি রেফারেল সম্পন্ন করুন।</p>
+        </div>
+
+        <!-- Level 5: Diamond -->
+        <div class="p-3 rounded-2xl bg-gradient-to-r from-purple-950/40 to-zinc-900 border border-purple-500/40">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-black text-purple-300">👑 Lvl 5: ডায়মন্ড লিজেন্ড</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/30 text-purple-200 font-extrabold border border-purple-400/50">2.0x (দ্বিগুণ আয়)</span>
+          </div>
+          <p class="text-[11px] text-zinc-400 mt-1">শর্ত: ৬টি টাস্ক এবং ১৫টি রেফারেল। সমস্ত কাজের দ্বিগুণ রিওয়ার্ড!</p>
+        </div>
+      </div>
+
+      <button onclick="closeModal('levelModal')" class="w-full mt-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-2.5 rounded-xl text-xs transition-colors">
+        বন্ধ করুন
+      </button>
+    </div>
+  </div>
+
+  <!-- 3. TOP 10 REFERRALS LEADERBOARD MODAL -->
+  <div id="leaderboardModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="w-full max-w-sm max-h-[90vh] bg-zinc-950 border border-zinc-800 rounded-3xl p-5 shadow-2xl flex flex-col relative overflow-hidden">
+      <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🏆</span>
+          <div>
+            <h3 class="font-black text-sm text-white">টপ ১০ রেফারেল লিডারবোর্ড</h3>
+            <p class="text-[11px] text-zinc-400">সর্বোচ্চ রেফারারদের মাসিক প্রাইজ পুল</p>
+          </div>
+        </div>
+        <button onclick="closeModal('leaderboardModal')" class="w-8 h-8 rounded-full bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center">✕</button>
+      </div>
+
+      <!-- Top 3 Podium -->
+      <div class="grid grid-cols-3 gap-2 pt-3 pb-2 text-center items-end">
+        <!-- 2nd Rank -->
+        <div class="bg-zinc-900/90 border border-slate-700/80 rounded-2xl p-2.5">
+          <span class="text-xl">🥈</span>
+          <p class="text-xs font-bold text-slate-200 truncate mt-1">Tanvir_H</p>
+          <p class="text-[10px] text-zinc-400">৭৮ রেফার</p>
+          <span class="text-[9px] font-bold text-emerald-400 block mt-0.5">৳১,১৭০</span>
+        </div>
+        <!-- 1st Rank (Taller) -->
+        <div class="bg-gradient-to-b from-amber-500/20 to-zinc-900 border border-amber-500/50 rounded-2xl p-3 pb-4 -translate-y-1 shadow-lg shadow-amber-500/10">
+          <span class="text-2xl">🥇</span>
+          <p class="text-xs font-black text-amber-300 truncate mt-1">Shakib_Pro</p>
+          <p class="text-[10px] font-extrabold text-white">১২৪ রেফার</p>
+          <span class="text-[10px] font-extrabold text-amber-400 block mt-0.5">৳১,৮৬০</span>
+        </div>
+        <!-- 3rd Rank -->
+        <div class="bg-zinc-900/90 border border-amber-800/60 rounded-2xl p-2.5">
+          <span class="text-xl">🥉</span>
+          <p class="text-xs font-bold text-amber-500/90 truncate mt-1">Rahim_99</p>
+          <p class="text-[10px] text-zinc-400">৫৬ রেফার</p>
+          <span class="text-[9px] font-bold text-emerald-400 block mt-0.5">৳৮৪০</span>
+        </div>
+      </div>
+
+      <!-- Top 4-10 Scrollable List -->
+      <div id="leaderboardList" class="overflow-y-auto custom-scrollbar flex-1 py-2 space-y-1.5 text-xs">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- User's Standing Callout Footer -->
+      <div id="leaderboardUserStanding" class="mt-2 p-3 rounded-2xl bg-zinc-900 border border-indigo-500/30 flex items-center justify-between text-xs">
+        <div>
+          <span class="text-[10px] text-zinc-400 block">আপনার বর্তমান অবস্থান</span>
+          <p class="font-extrabold text-white" id="leaderboardMyRankText">র‍্যাংক #1 • 0 রেফারেল</p>
+        </div>
+        <button onclick="closeModal('leaderboardModal'); switchTab('refer')" class="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black px-3 py-1.5 rounded-xl text-xs active:scale-95 transition-all">
+          রেফার করুন ➔
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. SUPER ADMIN PANEL MODAL -->
+  <div id="adminModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="w-full max-w-sm max-h-[92vh] bg-zinc-950 border border-amber-500/30 rounded-3xl p-5 shadow-2xl flex flex-col relative overflow-hidden">
+      <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🛡️</span>
+          <div>
+            <h3 class="font-black text-sm text-amber-400">সুপার অ্যাডমিন প্যানেল</h3>
+            <p class="text-[10px] text-zinc-400">সিস্টেম কনফিগারেশন এবং উইথড্র ম্যানেজমেন্ট</p>
+          </div>
+        </div>
+        <button onclick="closeModal('adminModal')" class="w-8 h-8 rounded-full bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center">✕</button>
+      </div>
+
+      <div class="overflow-y-auto custom-scrollbar flex-1 py-3 space-y-4 text-xs">
+        <!-- Ad Configuration -->
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5 space-y-2.5">
+          <h4 class="font-bold text-white uppercase tracking-wider text-[11px]">বিজ্ঞাপন সেটিংস (Ad Settings)</h4>
+          <div class="flex items-center justify-between">
+            <span class="text-zinc-300">বিজ্ঞাপনের মোড:</span>
+            <select id="adminAdMode" onchange="updateAdminSettings()" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-white">
+              <option value="simulated">সিমুলেটেড / ডেমো ভিডিও</option>
+              <option value="adsgram">লাইভ Adsgram SDK</option>
+            </select>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-zinc-300">Adsgram Block ID:</span>
+            <input type="text" id="adminAdsgramBlockId" onchange="updateAdminSettings()" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-white text-right w-28" />
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-zinc-300">প্রতি বিজ্ঞাপনে বেস আয় (৳):</span>
+            <input type="number" id="adminAdBaseReward" step="0.5" onchange="updateAdminSettings()" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-white text-right w-20" />
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-zinc-300">দৈনিক বিজ্ঞাপন লিমিট:</span>
+            <input type="number" id="adminDailyAdLimit" onchange="updateAdminSettings()" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-white text-right w-20" />
+          </div>
+        </div>
+
+        <!-- Referral & Cashout Settings -->
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5 space-y-2.5">
+          <h4 class="font-bold text-white uppercase tracking-wider text-[11px]">পেমেন্ট ও রেফারেল সেটিংস</h4>
+          <div class="flex items-center justify-between">
+            <span class="text-zinc-300">প্রতি রেফারেল বোনাস (৳):</span>
+            <input type="number" id="adminReferralBonus" onchange="updateAdminSettings()" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-white text-right w-20" />
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-zinc-300">সর্বনিম্ন উইথড্রয়াল (৳):</span>
+            <input type="number" id="adminMinWithdraw" onchange="updateAdminSettings()" class="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-white text-right w-20" />
+          </div>
+        </div>
+
+        <!-- Pending Withdrawals Review -->
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5 space-y-2.5">
+          <h4 class="font-bold text-white uppercase tracking-wider text-[11px]">উইথড্র রিকোয়েস্ট অনুমোদন</h4>
+          <div id="adminPendingWithdrawList" class="space-y-2">
+            <!-- Populated by JS -->
+            <p class="text-zinc-500 text-center py-1">কোনো পেন্ডিং উইথড্র রিকোয়েস্ট নেই</p>
+          </div>
+        </div>
+
+        <!-- Quick Balance Adjuster for Testing -->
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5 space-y-2">
+          <h4 class="font-bold text-white uppercase tracking-wider text-[11px]">টেস্টিং টুলস (Testing Sandbox)</h4>
+          <div class="flex gap-2">
+            <button onclick="adminAddBalance(50)" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-emerald-400 font-bold py-2 rounded-xl border border-zinc-700">+৳৫০ দিন</button>
+            <button onclick="adminAddBalance(100)" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-emerald-400 font-bold py-2 rounded-xl border border-zinc-700">+৳১০০ দিন</button>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="closeModal('adminModal')" class="w-full mt-2 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black py-2.5 rounded-xl text-xs transition-colors">
+        সেটিংস সেভ ও বন্ধ করুন
+      </button>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-zinc-900/95 border border-emerald-500/50 text-white text-xs font-bold px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 transform -translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <span id="toastIcon">✅</span>
+    <span id="toastMessage">অ্যাকশন সফল হয়েছে!</span>
+  </div>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    /* -------------------------------------------------------------
+       STATE MANAGEMENT & LOCALSTORAGE PERSISTENCE
+    ------------------------------------------------------------- */
+    const STORAGE_KEY = 'bangla_task_hub_state_v2';
+    
+    // Level Configurations & Multipliers
+    const LEVEL_TIERS = [
+      { level: 1, name: 'ব্রোঞ্জ স্টার্টার (Bronze)', icon: '🥉', multiplier: 1.0, tasksReq: 0, refsReq: 0 },
+      { level: 2, name: 'সিলভার আর্নার (Silver)', icon: '🥈', multiplier: 1.15, tasksReq: 2, refsReq: 2 },
+      { level: 3, name: 'গোল্ড মাস্টার (Gold)', icon: '🥇', multiplier: 1.30, tasksReq: 4, refsReq: 5 },
+      { level: 4, name: 'প্লাটিনাম ভিআইপি (Platinum)', icon: '💎', multiplier: 1.60, tasksReq: 5, refsReq: 10 },
+      { level: 5, name: 'ডায়মন্ড লিজেন্ড (Diamond)', icon: '👑', multiplier: 2.00, tasksReq: 6, refsReq: 15 },
+    ];
+
+    // Default System State
+    const defaultState = {
+      user: {
+        id: '882391024',
+        name: 'রাফি ইসলাম',
+        username: 'rafi_pro',
+        avatarInitial: 'R',
+        balance: 15.50,
+        taskEarnings: 8.00,
+        referralEarnings: 7.50,
+        referralCode: 'BTH8823',
+        completedTasks: [],
+        totalAdsWatched: 4,
+        dailyAdsWatchedToday: 4,
+        lastDailyClaimDate: null,
+        soundEnabled: true,
+        referrals: [
+          { name: 'আরিফ হোসেন', date: '২০২৬-০৯-২৫', earned: 15.00 },
+          { name: 'সাদিয়া সুলতানা', date: '২০২৬-০৯-২৬', earned: 15.00 }
+        ],
+        transactions: [
+          { id: 'TX-101', type: 'task', title: 'টেলিগ্রাম চ্যানেল জয়েন', amount: 3.50, date: '২০২৬-০৯-২৬', status: 'completed' },
+          { id: 'TX-102', type: 'ad', title: 'রিওয়ার্ডেড ভিডিও অ্যাড', amount: 1.15, date: '২০২৬-০৯-২৭', status: 'completed' },
+          { id: 'TX-103', type: 'referral', title: 'নতুন বন্ধু রেফারেল বোনাস', amount: 15.00, date: '২০২৬-০৯-২৭', status: 'completed' }
+        ],
+        withdrawals: [
+          { id: 'WD-901', method: 'bKash', account: '01712345678', amount: 50.00, date: '২০২৬-০৯-২৪', status: 'completed' }
+        ]
+      },
+      settings: {
+        adMode: 'simulated', // 'simulated' or 'adsgram'
+        adsgramBlockId: '4821',
+        adBaseReward: 1.00,
+        dailyAdLimit: 20,
+        referralBonus: 15.00,
+        minWithdraw: 50.00,
+        adminPin: '1234'
+      },
+      tasks: [
+        { id: 't1', title: 'অফিসিয়াল টেলিগ্রাম চ্যানেলে জয়েন করুন', platform: 'telegram', baseReward: 4.00, icon: '✈️', link: 'https://t.me/telegram' },
+        { id: 't2', title: 'ইউটিউব চ্যানেল সাবস্ক্রাইব করুন', platform: 'youtube', baseReward: 5.00, icon: '▶️', link: 'https://youtube.com' },
+        { id: 't3', title: 'ফেসবুক পেজে লাইক ও ফলো দিন', platform: 'facebook', baseReward: 3.50, icon: '👍', link: 'https://facebook.com' },
+        { id: 't4', title: 'পার্টনার অ্যাপ ডাউনলোড করে ৫ স্টার রেটিং দিন', platform: 'app', baseReward: 10.00, icon: '⭐', link: 'https://play.google.com' }
+      ]
+    };
+
+    let appState = loadState();
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to load state from localStorage', e);
+      }
+      return JSON.parse(JSON.stringify(defaultState));
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.error('Failed to save state to localStorage', e);
+      }
+      renderApp();
+    }
+
+    /* -------------------------------------------------------------
+       AUDIO SYNTHESIS SYSTEM (Web Audio API - No external mp3s needed)
+    ------------------------------------------------------------- */
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playSound(type) {
+      if (!appState.user.soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+
+        if (type === 'coin') {
+          // Cheerful coin chime
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(987.77, now); // B5
+          osc.frequency.exponentialRampToValueAtTime(1318.51, now + 0.12); // E6
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.35);
+        } else if (type === 'levelup') {
+          // Glorious fanfare
+          [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + i * 0.08);
+            gain.gain.setValueAtTime(0.25, now + i * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + i * 0.08);
+            osc.stop(now + i * 0.08 + 0.3);
+          });
+        } else if (type === 'click') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(600, now);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.05);
+        }
+      } catch (err) {
+        console.log('Audio synthesis warning:', err);
+      }
+    }
+
+    function toggleSound() {
+      appState.user.soundEnabled = !appState.user.soundEnabled;
+      saveState();
+      showToast(appState.user.soundEnabled ? 'সাউন্ড চালু করা হয়েছে 🔊' : 'সাউন্ড বন্ধ করা হয়েছে 🔇');
+    }
+
+    /* -------------------------------------------------------------
+       TELEGRAM WEBAPP SDK INTEGRATION
+    ------------------------------------------------------------- */
+    function initTelegram() {
+      if (window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+          const u = tg.initDataUnsafe.user;
+          appState.user.id = String(u.id);
+          appState.user.name = u.first_name + (u.last_name ? ' ' + u.last_name : '');
+          appState.user.username = u.username || 'tg_user';
+          appState.user.avatarInitial = (u.first_name || 'U').charAt(0).toUpperCase();
+          appState.user.referralCode = 'BTH' + String(u.id).slice(-4);
+        }
+      } else {
+        // Show demo notification if not inside Telegram
+        const banner = document.getElementById('tgNoticeBanner');
+        if (banner) banner.classList.remove('hidden');
+      }
+    }
+
+    function triggerHaptic(type = 'medium') {
+      try {
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+          if (type === 'success') {
+            window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+          } else {
+            window.Telegram.WebApp.HapticFeedback.impactOccurred(type);
+          }
+        }
+      } catch (e) {}
+    }
+
+    /* -------------------------------------------------------------
+       LEVEL PROGRESSION & RANKING CALCULATION
+    ------------------------------------------------------------- */
+    function getUserLevel() {
+      const completedTasksCount = appState.user.completedTasks.length;
+      const referralsCount = appState.user.referrals.length;
+
+      let currentLevel = LEVEL_TIERS[0];
+      let nextLevel = LEVEL_TIERS[1];
+
+      for (let i = LEVEL_TIERS.length - 1; i >= 0; i--) {
+        const tier = LEVEL_TIERS[i];
+        if (completedTasksCount >= tier.tasksReq && referralsCount >= tier.refsReq) {
+          currentLevel = tier;
+          nextLevel = LEVEL_TIERS[i + 1] || null;
+          break;
+        }
+      }
+
+      let progress = 100;
+      if (nextLevel) {
+        const taskProg = Math.min(completedTasksCount / nextLevel.tasksReq, 1);
+        const refProg = Math.min(referralsCount / nextLevel.refsReq, 1);
+        progress = Math.round(((taskProg + refProg) / 2) * 100);
+      }
+
+      return { currentLevel, nextLevel, progress };
+    }
+
+    function getLeaderboard() {
+      // Mock competitive peer list
+      const communityUsers = [
+        { name: 'Shakib_Pro', refs: 124, earned: 1860, tier: '👑 Diamond' },
+        { name: 'Tanvir_H', refs: 78, earned: 1170, tier: '💎 Platinum' },
+        { name: 'Rahim_99', refs: 56, earned: 840, tier: '💎 Platinum' },
+        { name: 'Nusrat_Jahan', refs: 42, earned: 630, tier: '🥇 Gold' },
+        { name: 'Hasan_Ali', refs: 31, earned: 465, tier: '🥇 Gold' },
+        { name: 'Farhan_Akhtar', refs: 24, earned: 360, tier: '🥇 Gold' },
+        { name: 'Sumona_Akter', refs: 19, earned: 285, tier: '👑 Diamond' },
+        { name: 'Kamrul_Islam', refs: 14, earned: 210, tier: '🥈 Silver' },
+        { name: 'Mehedi_Hasan', refs: 11, earned: 165, tier: '🥈 Silver' },
+      ];
+
+      // Add active user
+      const myRefs = appState.user.referrals.length;
+      const myEarned = appState.user.referralEarnings;
+      const { currentLevel } = getUserLevel();
+
+      const userEntry = {
+        name: appState.user.username ? '@' + appState.user.username : appState.user.name,
+        refs: myRefs,
+        earned: myEarned,
+        tier: currentLevel.name.split(' ')[0] + ' ' + currentLevel.name.split(' ')[1],
+        isUser: true
+      };
+
+      const combined = [...communityUsers, userEntry].sort((a, b) => b.refs - a.refs);
+      const userRank = combined.findIndex(u => u.isUser) + 1;
+      const overtakeTarget = userRank > 1 ? combined[userRank - 2] : null;
+
+      return {
+        top10: combined.slice(0, 10),
+        userRank,
+        overtakeTarget,
+        userRefs: myRefs
+      };
+    }
+
+    /* -------------------------------------------------------------
+       UI RENDERING
+    ------------------------------------------------------------- */
+    function renderApp() {
+      const u = appState.user;
+      const { currentLevel, nextLevel, progress } = getUserLevel();
+      const lb = getLeaderboard();
+
+      // Top Header
+      document.getElementById('headerUserName').textContent = u.name;
+      document.getElementById('telegramHandleText').textContent = u.username ? '@' + u.username : 'ID: ' + u.id;
+      document.getElementById('userAvatarInitial').textContent = u.avatarInitial;
+      document.getElementById('headerBalance').textContent = u.balance.toFixed(2);
+      document.getElementById('headerLevelPill').innerHTML = `<span>${currentLevel.icon} Lvl ${currentLevel.level} (${currentLevel.multiplier}x)</span>`;
+      document.getElementById('soundToggleBtn').textContent = u.soundEnabled ? '🔊' : '🔇';
+
+      // Home Tab
+      document.getElementById('homeMainBalance').textContent = u.balance.toFixed(2);
+      document.getElementById('homeTaskEarnings').textContent = '৳' + u.taskEarnings.toFixed(2);
+      document.getElementById('homeReferralEarnings').textContent = '৳' + u.referralEarnings.toFixed(2);
+      document.getElementById('homeLevelBadgeIcon').textContent = currentLevel.icon;
+      document.getElementById('homeLevelTierName').textContent = currentLevel.name + ` (Lvl ${currentLevel.level})`;
+      document.getElementById('homeLevelMultiplierBadge').textContent = `${currentLevel.multiplier}x Boost`;
+      document.getElementById('homeLevelProgressBar').style.width = `${progress}%`;
+      document.getElementById('homeLevelPercentText').textContent = `${progress}%`;
+      document.getElementById('homeRankPill').textContent = `র‍্যাংক #${lb.userRank}`;
+
+      if (lb.overtakeTarget) {
+        const needed = (lb.overtakeTarget.refs - lb.userRefs) + 1;
+        document.getElementById('homeRankOvertakeText').textContent = `আর মাত্র ${needed}টি রেফার করে ${lb.overtakeTarget.name}-কে ছাড়িয়ে যান!`;
+      } else {
+        document.getElementById('homeRankOvertakeText').textContent = `অভিনন্দন! আপনি লিডারবোর্ডের শীর্ষ স্থানে আছেন 👑`;
+      }
+
+      // Home Recent Tx List
+      const txContainer = document.getElementById('homeRecentTxList');
+      if (u.transactions.length === 0) {
+        txContainer.innerHTML = '<p class="text-zinc-500 text-center py-2">কোনো সাম্প্রতিক রেকর্ড নেই</p>';
+      } else {
+        txContainer.innerHTML = u.transactions.slice(-3).reverse().map(tx => `
+          <div class="flex items-center justify-between p-2 rounded-xl bg-zinc-800/40 border border-zinc-800">
+            <div>
+              <p class="font-bold text-white text-xs">${tx.title}</p>
+              <span class="text-[10px] text-zinc-400">${tx.date}</span>
+            </div>
+            <span class="font-extrabold text-xs text-emerald-400">+৳${tx.amount.toFixed(2)}</span>
+          </div>
+        `).join('');
+      }
+
+      // Earn Tab (Boosted values)
+      const boostedAdReward = (appState.settings.adBaseReward * currentLevel.multiplier);
+      document.getElementById('earnAdRewardAmountText').textContent = `+৳${boostedAdReward.toFixed(2)}`;
+      document.getElementById('earnAdMultiplierTag').textContent = `${currentLevel.multiplier}x Boosted`;
+      document.getElementById('dailyAdCounterText').textContent = `${appState.settings.dailyAdLimit - u.dailyAdsWatchedToday} / ${appState.settings.dailyAdLimit}`;
+
+      renderTasksList(currentLevel.multiplier);
+
+      // Refer Tab
+      document.getElementById('myReferralCode').textContent = u.referralCode;
+      document.getElementById('referTotalCount').textContent = u.referrals.length;
+      document.getElementById('referTotalIncome').textContent = '৳' + u.referralEarnings.toFixed(2);
+      document.getElementById('referRankStatusText').textContent = `আপনার বর্তমান অবস্থান: #${lb.userRank} (${u.referrals.length} রেফারেল)`;
+
+      const refFriendsList = document.getElementById('referredFriendsList');
+      if (u.referrals.length === 0) {
+        refFriendsList.innerHTML = '<p class="text-zinc-500 text-center py-2">এখনো কোনো বন্ধু যোগ দেয়নি</p>';
+      } else {
+        refFriendsList.innerHTML = u.referrals.map(rf => `
+          <div class="flex items-center justify-between p-2 rounded-xl bg-zinc-800/40 border border-zinc-800">
+            <div>
+              <p class="font-bold text-white text-xs">${rf.name}</p>
+              <span class="text-[10px] text-zinc-400">যোগদান: ${rf.date}</span>
+            </div>
+            <span class="font-extrabold text-xs text-emerald-400">+৳${rf.earned.toFixed(2)}</span>
+          </div>
+        `).join('');
+      }
+
+      // Withdraw Tab
+      document.getElementById('withdrawAvailBalanceText').textContent = '৳' + u.balance.toFixed(2);
+      const wdHistory = document.getElementById('withdrawHistoryList');
+      if (u.withdrawals.length === 0) {
+        wdHistory.innerHTML = '<p class="text-zinc-500 text-center py-2">কোনো উত্তোলনের রেকর্ড নেই</p>';
+      } else {
+        wdHistory.innerHTML = u.withdrawals.map(w => `
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-zinc-800/40 border border-zinc-800">
+            <div>
+              <p class="font-bold text-white text-xs">${w.method} (${w.account})</p>
+              <span class="text-[10px] text-zinc-400">${w.date}</span>
+            </div>
+            <div class="text-right">
+              <span class="font-extrabold text-xs text-white block">৳${w.amount.toFixed(2)}</span>
+              <span class="text-[9px] font-bold px-1.5 py-0.2 rounded-full ${w.status === 'completed' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}">${w.status === 'completed' ? 'সফল' : 'পেন্ডিং'}</span>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Profile Tab
+      document.getElementById('profileAvatarInitial').textContent = u.avatarInitial;
+      document.getElementById('profileFullName').textContent = u.name;
+      document.getElementById('profileTelegramId').textContent = 'ID: ' + u.id;
+      document.getElementById('profileTierBadge').innerHTML = `<span>${currentLevel.icon} ${currentLevel.name.split(' ')[0]} (${currentLevel.multiplier}x)</span>`;
+      document.getElementById('profileRankBadge').innerHTML = `<span>🏆 Rank #${lb.userRank} (${u.referrals.length} refs)</span>`;
+      document.getElementById('profileCompletedTasksCount').textContent = u.completedTasks.length;
+      document.getElementById('profileTotalAdsWatched').textContent = u.totalAdsWatched;
+      const totalCashoutSum = u.withdrawals.reduce((sum, w) => sum + w.amount, 0);
+      document.getElementById('profileTotalCashout').textContent = '৳' + totalCashoutSum.toFixed(2);
+
+      // Leaderboard Modal content
+      renderLeaderboardModal(lb);
+    }
+
+    function renderTasksList(multiplier) {
+      const container = document.getElementById('tasksContainer');
+      const u = appState.user;
+      const remaining = appState.tasks.filter(t => !u.completedTasks.includes(t.id)).length;
+      document.getElementById('tasksRemainingBadge').textContent = `${remaining}টি কাজ বাকি`;
+
+      container.innerHTML = appState.tasks.map(t => {
+        const isDone = u.completedTasks.includes(t.id);
+        const reward = (t.baseReward * multiplier).toFixed(2);
+        return `
+          <div class="p-3.5 rounded-2xl bg-zinc-900 border ${isDone ? 'border-zinc-800 opacity-60' : 'border-zinc-700/80 hover:border-zinc-600'} flex items-center justify-between gap-3 transition-all">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-lg flex-shrink-0">
+                ${t.icon}
+              </div>
+              <div>
+                <h4 class="text-xs font-bold text-white line-clamp-1">${t.title}</h4>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span class="text-xs font-black text-emerald-400">+৳${reward}</span>
+                  ${multiplier > 1.0 ? `<span class="text-[9px] font-bold text-amber-300 bg-amber-500/20 px-1 rounded">${multiplier}x Boost</span>` : ''}
+                </div>
+              </div>
+            </div>
+            ${isDone ? `
+              <span class="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl flex items-center gap-1">
+                ✓ সম্পন্ন
+              </span>
+            ` : `
+              <button onclick="handleTaskClick('${t.id}')" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-xs px-3.5 py-1.5 rounded-xl shadow-md active:scale-95 transition-all">
+                শুরু করুন
+              </button>
+            `}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderLeaderboardModal(lb) {
+      const list = document.getElementById('leaderboardList');
+      list.innerHTML = lb.top10.slice(3).map((item, idx) => {
+        const rank = idx + 4;
+        return `
+          <div class="flex items-center justify-between p-2 rounded-xl ${item.isUser ? 'bg-amber-500/15 border border-amber-500/40' : 'bg-zinc-900 border border-zinc-800'}">
+            <div class="flex items-center gap-2">
+              <span class="w-5 text-center font-bold text-zinc-400">#${rank}</span>
+              <div>
+                <p class="font-bold text-white text-xs ${item.isUser ? 'text-amber-300 font-black' : ''}">
+                  ${item.name} ${item.isUser ? '(আপনি)' : ''}
+                </p>
+                <span class="text-[10px] text-zinc-400">${item.tier}</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="font-black text-xs text-white block">${item.refs} রেফার</span>
+              <span class="text-[10px] text-emerald-400">৳${item.earned}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('leaderboardMyRankText').textContent = `র‍্যাংক #${lb.userRank} • ${lb.userRefs} রেফারেল`;
+    }
+
+    /* -------------------------------------------------------------
+       USER INTERACTIONS & EARNING LOGIC
+    ------------------------------------------------------------- */
+    function switchTab(tabId) {
+      playSound('click');
+      triggerHaptic('light');
+
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-button').forEach(btn => {
+        btn.classList.remove('text-emerald-400', 'font-bold');
+        btn.classList.add('text-zinc-400', 'font-medium');
+      });
+
+      const activeBtn = document.getElementById('nav-btn-' + tabId);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-zinc-400', 'font-medium');
+        activeBtn.classList.add('text-emerald-400', 'font-bold');
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Rewarded Video Ad Handling
+    let adCountdownTimer = null;
+    function watchRewardedAd() {
+      if (appState.user.dailyAdsWatchedToday >= appState.settings.dailyAdLimit) {
+        showToast('আজকের বিজ্ঞাপনের সীমা শেষ হয়েছে! কাল আবার আসুন।', '⚠️');
+        return;
+      }
+
+      const { currentLevel } = getUserLevel();
+      const reward = (appState.settings.adBaseReward * currentLevel.multiplier);
+
+      if (appState.settings.adMode === 'adsgram' && window.Adsgram) {
+        // Live Adsgram SDK call
+        try {
+          const AdController = window.Adsgram.init({ blockId: appState.settings.adsgramBlockId });
+          AdController.show().then((result) => {
+            creditAdReward(reward);
+          }).catch((err) => {
+            console.log('Adsgram ad closed early or failed, falling back to simulated:', err);
+            openSimulatedAd(reward);
+          });
+          return;
+        } catch (e) {
+          console.error('Adsgram invocation error:', e);
+        }
+      }
+
+      // Default high-fidelity simulated video ad modal
+      openSimulatedAd(reward);
+    }
+
+    function openSimulatedAd(reward) {
+      document.getElementById('adModalRewardText').textContent = `+৳${reward.toFixed(2)}`;
+      document.getElementById('adModal').classList.remove('hidden');
+      
+      let secondsLeft = 15;
+      const badge = document.getElementById('adCountdownBadge');
+      const closeBtn = document.getElementById('adCloseBtn');
+      const prog = document.getElementById('adVideoProgressBar');
+
+      closeBtn.disabled = true;
+      closeBtn.classList.add('cursor-not-allowed', 'text-zinc-500');
+      closeBtn.classList.remove('bg-emerald-500', 'text-zinc-950', 'hover:bg-emerald-400');
+      prog.style.width = '0%';
+
+      setTimeout(() => {
+        prog.style.width = '100%';
+      }, 50);
+
+      clearInterval(adCountdownTimer);
+      adCountdownTimer = setInterval(() => {
+        secondsLeft--;
+        badge.textContent = `${secondsLeft}s`;
+        closeBtn.textContent = `বিজ্ঞাপন সমাপ্তির জন্য অপেক্ষা করুন... (${secondsLeft})`;
+
+        if (secondsLeft <= 0) {
+          clearInterval(adCountdownTimer);
+          badge.textContent = 'সমাপ্ত ✓';
+          closeBtn.disabled = false;
+          closeBtn.textContent = `পুরস্কার সংগ্রহ করুন (+৳${reward.toFixed(2)})`;
+          closeBtn.classList.remove('cursor-not-allowed', 'text-zinc-500');
+          closeBtn.classList.add('bg-emerald-500', 'text-zinc-950', 'hover:bg-emerald-400', 'font-black');
+          triggerHaptic('success');
+        }
+      }, 1000);
+    }
+
+    function closeAdModal(completed) {
+      clearInterval(adCountdownTimer);
+      document.getElementById('adModal').classList.add('hidden');
+      if (completed) {
+        const { currentLevel } = getUserLevel();
+        const reward = (appState.settings.adBaseReward * currentLevel.multiplier);
+        creditAdReward(reward);
+      }
+    }
+
+    function creditAdReward(amount) {
+      appState.user.balance += amount;
+      appState.user.totalAdsWatched += 1;
+      appState.user.dailyAdsWatchedToday += 1;
+      appState.user.transactions.push({
+        id: 'TX-' + Date.now().toString().slice(-4),
+        type: 'ad',
+        title: 'রিওয়ার্ডেড ভিডিও অ্যাড বোনাস',
+        amount: amount,
+        date: new Date().toISOString().slice(0, 10),
+        status: 'completed'
+      });
+
+      playSound('coin');
+      triggerHaptic('success');
+      confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
+      showToast(`অভিনন্দন! +৳${amount.toFixed(2)} ব্যালেন্সে যুক্ত হয়েছে`);
+      saveState();
+    }
+
+    // Task Execution
+    function handleTaskClick(taskId) {
+      const task = appState.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      const { currentLevel } = getUserLevel();
+      const reward = task.baseReward * currentLevel.multiplier;
+
+      // Open task link
+      window.open(task.link, '_blank');
+      showToast('টাস্ক যাচাই করা হচ্ছে... ৩ সেকেন্ড অপেক্ষা করুন', '⏳');
+
+      setTimeout(() => {
+        if (!appState.user.completedTasks.includes(taskId)) {
+          const oldLevel = getUserLevel().currentLevel.level;
+          appState.user.completedTasks.push(taskId);
+          appState.user.balance += reward;
+          appState.user.taskEarnings += reward;
+          appState.user.transactions.push({
+            id: 'TX-' + Date.now().toString().slice(-4),
+            type: 'task',
+            title: task.title,
+            amount: reward,
+            date: new Date().toISOString().slice(0, 10),
+            status: 'completed'
+          });
+
+          const newLevel = getUserLevel().currentLevel.level;
+          if (newLevel > oldLevel) {
+            playSound('levelup');
+            confetti({ particleCount: 120, spread: 80, origin: { y: 0.5 } });
+            showToast(`লেভেল আপ! আপনি এখন লেভেল ${newLevel}-এ উন্নীত হয়েছেন! 🎉`);
+          } else {
+            playSound('coin');
+            confetti({ particleCount: 50, spread: 50 });
+            showToast(`টাস্ক সম্পন্ন! +৳${reward.toFixed(2)} যোগ হয়েছে`);
+          }
+          triggerHaptic('success');
+          saveState();
+        }
+      }, 3000);
+    }
+
+    // Daily Claim
+    function claimDailyReward() {
+      const today = new Date().toISOString().slice(0, 10);
+      if (appState.user.lastDailyClaimDate === today) {
+        showToast('আপনি আজকের দৈনিক বোনাস ইতিমধ্যে গ্রহণ করেছেন!', '⚠️');
+        return;
+      }
+
+      const { currentLevel } = getUserLevel();
+      const bonus = 2.00 * currentLevel.multiplier;
+
+      appState.user.balance += bonus;
+      appState.user.lastDailyClaimDate = today;
+      appState.user.transactions.push({
+        id: 'TX-' + Date.now().toString().slice(-4),
+        type: 'daily',
+        title: 'দৈনিক চেক-ইন বোনাস',
+        amount: bonus,
+        date: today,
+        status: 'completed'
+      });
+
+      playSound('coin');
+      triggerHaptic('success');
+      confetti({ particleCount: 70, spread: 70 });
+      showToast(`দৈনিক বোনাস +৳${bonus.toFixed(2)} সংগ্রহ করা হয়েছে!`);
+      saveState();
+    }
+
+    // Referral Simulation & Sharing
+    function simulateFriendJoin() {
+      const names = ['সাকিব মাহমুদ', 'ফারজানা হক', 'মেহেদী হাসান', 'আনিকা তাহসিন', 'তানভীর আহমেদ'];
+      const randomName = names[Math.floor(Math.random() * names.length)];
+      const bonus = appState.settings.referralBonus;
+
+      const oldLevel = getUserLevel().currentLevel.level;
+      appState.user.balance += bonus;
+      appState.user.referralEarnings += bonus;
+      appState.user.referrals.push({
+        name: randomName,
+        date: new Date().toISOString().slice(0, 10),
+        earned: bonus
+      });
+      appState.user.transactions.push({
+        id: 'TX-' + Date.now().toString().slice(-4),
+        type: 'referral',
+        title: `বন্ধু রেফারেল: ${randomName}`,
+        amount: bonus,
+        date: new Date().toISOString().slice(0, 10),
+        status: 'completed'
+      });
+
+      const newLevel = getUserLevel().currentLevel.level;
+      if (newLevel > oldLevel) {
+        playSound('levelup');
+        confetti({ particleCount: 140, spread: 90, origin: { y: 0.5 } });
+        showToast(`লেভেল আপ! আপনি এখন লেভেল ${newLevel}-এ পৌঁছেছেন! 👑`);
+      } else {
+        playSound('coin');
+        confetti({ particleCount: 60, spread: 60 });
+        showToast(`নতুন রেফারেল! +৳${bonus.toFixed(2)} যোগ হয়েছে 🎉`);
+      }
+      triggerHaptic('success');
+      saveState();
+    }
+
+    function copyReferralCode() {
+      playSound('click');
+      navigator.clipboard.writeText(appState.user.referralCode);
+      showToast('রেফারেল কোড কপি করা হয়েছে! 📋');
+    }
+
+    function shareOnTelegram() {
+      playSound('click');
+      const shareText = encodeURIComponent(`🔥 Bangla Task Hub এ কাজ করে বিকাশ/নগদে টাকা ইনকাম করুন! আমার রেফারেল কোড: ${appState.user.referralCode}\nজয়েন করতে লিংকটিতে ক্লিক করুন:`);
+      const shareUrl = encodeURIComponent(`https://t.me/BanglaTaskHubBot?start=${appState.user.referralCode}`);
+      window.open(`https://t.me/share/url?url=${shareUrl}&text=${shareText}`, '_blank');
+    }
+
+    // Cashout Submission
+    function handleWithdrawSubmit(e) {
+      e.preventDefault();
+      const method = document.querySelector('input[name="withdrawMethod"]:checked').value;
+      const account = document.getElementById('withdrawAccount').value.trim();
+      const amount = parseFloat(document.getElementById('withdrawAmount').value);
+
+      if (!/^01[3-9]\d{8}$/.test(account)) {
+        showToast('সঠিক ১১ ডিজিটের বাংলাদেশী নাম্বার লিখুন (যেমন: 017xxxxxxxx)', '⚠️');
+        return;
+      }
+
+      if (amount < appState.settings.minWithdraw) {
+        showToast(`সর্বনিম্ন উত্তোলনের পরিমাণ ৳${appState.settings.minWithdraw}`, '⚠️');
+        return;
+      }
+
+      if (amount > appState.user.balance) {
+        showToast('আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই!', '⚠️');
+        return;
+      }
+
+      appState.user.balance -= amount;
+      appState.user.withdrawals.push({
+        id: 'WD-' + Date.now().toString().slice(-4),
+        method: method,
+        account: account,
+        amount: amount,
+        date: new Date().toISOString().slice(0, 10),
+        status: 'pending'
+      });
+
+      playSound('coin');
+      triggerHaptic('success');
+      document.getElementById('withdrawForm').reset();
+      showToast('উত্তোলন অনুরোধ সফল হয়েছে! ১-২ ঘণ্টার মধ্যে পেমেন্ট পাবেন।');
+      saveState();
+    }
+
+    // Modals
+    function openModal(id) {
+      playSound('click');
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+      playSound('click');
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    // Toast
+    let toastTimeout = null;
+    function showToast(msg, icon = '✅') {
+      const t = document.getElementById('toast');
+      document.getElementById('toastMessage').textContent = msg;
+      document.getElementById('toastIcon').textContent = icon;
+      t.classList.remove('-translate-y-20', 'opacity-0');
+      t.classList.add('translate-y-0', 'opacity-100');
+
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        t.classList.remove('translate-y-0', 'opacity-100');
+        t.classList.add('-translate-y-20', 'opacity-0');
+      }, 2800);
+    }
+
+    // Admin Panel
+    function openAdminPanelAuth() {
+      const pin = prompt('সুপার অ্যাডমিন পিন কোড লিখুন (Default: 1234):');
+      if (pin === appState.settings.adminPin) {
+        // Populate inputs
+        document.getElementById('adminAdMode').value = appState.settings.adMode;
+        document.getElementById('adminAdsgramBlockId').value = appState.settings.adsgramBlockId;
+        document.getElementById('adminAdBaseReward').value = appState.settings.adBaseReward;
+        document.getElementById('adminDailyAdLimit').value = appState.settings.dailyAdLimit;
+        document.getElementById('adminReferralBonus').value = appState.settings.referralBonus;
+        document.getElementById('adminMinWithdraw').value = appState.settings.minWithdraw;
+
+        renderAdminPendingWithdrawals();
+        openModal('adminModal');
+      } else if (pin !== null) {
+        showToast('ভুল পিন কোড!', '❌');
+      }
+    }
+
+    function updateAdminSettings() {
+      appState.settings.adMode = document.getElementById('adminAdMode').value;
+      appState.settings.adsgramBlockId = document.getElementById('adminAdsgramBlockId').value;
+      appState.settings.adBaseReward = parseFloat(document.getElementById('adminAdBaseReward').value) || 1.00;
+      appState.settings.dailyAdLimit = parseInt(document.getElementById('adminDailyAdLimit').value) || 20;
+      appState.settings.referralBonus = parseFloat(document.getElementById('adminReferralBonus').value) || 15.00;
+      appState.settings.minWithdraw = parseFloat(document.getElementById('adminMinWithdraw').value) || 50.00;
+      saveState();
+      showToast('অ্যাডমিন সেটিংস আপডেট হয়েছে');
+    }
+
+    function renderAdminPendingWithdrawals() {
+      const list = document.getElementById('adminPendingWithdrawList');
+      const pending = appState.user.withdrawals.filter(w => w.status === 'pending');
+      if (pending.length === 0) {
+        list.innerHTML = '<p class="text-zinc-500 text-center py-1">কোনো পেন্ডিং উইথড্র রিকোয়েস্ট নেই</p>';
+      } else {
+        list.innerHTML = pending.map(w => `
+          <div class="flex items-center justify-between p-2 rounded-xl bg-zinc-800 border border-zinc-700">
+            <div>
+              <p class="font-bold text-white">${w.method} - ৳${w.amount.toFixed(2)}</p>
+              <p class="text-[10px] text-zinc-400">${w.account} • ${w.date}</p>
+            </div>
+            <button onclick="adminApproveWithdraw('${w.id}')" class="bg-emerald-500 text-zinc-950 font-bold px-2.5 py-1 rounded-lg text-xs">
+              অনুমোদন ✓
+            </button>
+          </div>
+        `).join('');
+      }
+    }
+
+    function adminApproveWithdraw(id) {
+      const w = appState.user.withdrawals.find(item => item.id === id);
+      if (w) {
+        w.status = 'completed';
+        saveState();
+        renderAdminPendingWithdrawals();
+        showToast(`উইথড্রয়াল ${id} সফলভাবে অনুমোদন করা হয়েছে!`);
+      }
+    }
+
+    function adminAddBalance(amount) {
+      appState.user.balance += amount;
+      saveState();
+      showToast(`ব্যালেন্সে +৳${amount} টেস্ট ফান্ড যোগ করা হয়েছে`);
+    }
+
+    function resetUserDataPrompt() {
+      if (confirm('আপনি কি সমস্ত টেস্ট ডেটা রিসেট করে ডিফল্ট অবস্থায় ফিরে যেতে চান?')) {
+        localStorage.removeItem(STORAGE_KEY);
+        appState = JSON.parse(JSON.stringify(defaultState));
+        initTelegram();
+        saveState();
+        showToast('অ্যাপ ডেটা রিসেট সম্পন্ন হয়েছে');
+      }
+    }
+
+    // Initialize application on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      initTelegram();
+      renderApp();
+    });
+  </script>
+</body>
+</html>
